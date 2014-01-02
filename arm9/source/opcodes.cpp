@@ -21,7 +21,9 @@ int getStackList(int *args, uint maxnum) {
 	num = pop();
 
 	if (num > maxnum)
+	{
 		printf("Error: Too many items %d in stack list, max %d\n", num, maxnum);
+	}
 
 	i = num;
 	while (i--) {
@@ -258,8 +260,7 @@ int findFreeArrayId() {
 
 static const int arrayDataSizes[] = { 0, 1, 4, 8, 8, 16, 32 };
 
-byte *defineArray(int array, int type, int dim2start, int dim2end,
-	int dim1start, int dim1end) {
+byte *defineArray(int array, int type, int dim2start, int dim2end, int dim1start, int dim1end) {
 		int id;
 		int size;
 		ArrayHeader *ah;
@@ -313,18 +314,25 @@ int readArray(int array, int idx2, int idx1) {
 	//printf("readArray (array %d, idx2 %d, idx1 %d)\n", readVar(array), idx2, idx1);
 
 	if (readVar(array) == 0)
+	{
 		printf("Error: readArray: Reference to zeroed array pointer\n");
+		return 0;
+	}
 
 	ArrayHeader *ah = _arrays[readVar(array) & ~0x33539000];//(ArrayHeader *)getResourceAddress(rtString, readVar(array));
 
 	if (!ah)
+	{
 		printf("Error: readArray: invalid array %d (%d)\n", array, readVar(array));
+		return 0;
+	}
 
 	if (idx2 < (int)ah->dim2start || idx2 > (int)ah->dim2end ||
 		idx1 < (int)ah->dim1start || idx1 > (int)ah->dim1end) {
 			printf("Error: readArray: array %d out of bounds: [%d, %d] exceeds [%d..%d, %d..%d]\n",
 				array, idx1, idx2, ah->dim1start, ah->dim1end,
 				ah->dim2start, ah->dim2end);
+			return 0;
 	}
 
 	const int offset = (ah->dim1end - ah->dim1start + 1) *
@@ -336,11 +344,11 @@ int readArray(int array, int idx2, int idx1) {
 		return ah->data[offset];
 
 	case kIntArray:
-		return (int16)((uint16_t*)ah->data)[offset];
+		return (int16)(((uint16_t*)ah->data)[offset]);
 		//return (int16)*((uint16_t*)(ah->data + offset * 2));
 
 	case kDwordArray:
-		return (int32)((uint32_t*)ah->data)[offset];
+		return (int32)(((uint32_t*)ah->data)[offset]);
 		//return (int32)*((uint32_t*)(ah->data + offset * 4));
 	}
 
@@ -351,22 +359,30 @@ void writeArray(int array, int idx2, int idx1, int value) {
 	//printf("writeArray (array %d, idx2 %d, idx1 %d, value %d)\n", readVar(array), idx2, idx1, value);
 
 	if (readVar(array) == 0)
+	{
 		printf("Error: writeArray: Reference to zeroed array pointer\n");
+		return;
+	}
 
 	ArrayHeader *ah = _arrays[readVar(array) & ~0x33539000];//(ArrayHeader *)getResourceAddress(rtString, readVar(array));
 
 	if (!ah)
+	{
 		printf("Error: writeArray: Invalid array (%d) reference\n", readVar(array));
+		return;
+	}
 
 	if (idx2 < (int)ah->dim2start || idx2 > (int)ah->dim2end ||
 		idx1 < (int)ah->dim1start || idx1 > (int)ah->dim1end) {
 			printf("Error: writeArray: array %d out of bounds: [%d, %d] exceeds [%d..%d, %d..%d]\n",
 				array, idx1, idx2, ah->dim1start, ah->dim1end,
 				ah->dim2start, ah->dim2end);
+			return;
 	}
 
 	const int offset = (ah->dim1end - ah->dim1start + 1) *
 		(idx2 - ah->dim2start) - ah->dim1start + idx1;
+
 
 	switch (ah->type) {
 	case kByteArray:
@@ -564,6 +580,119 @@ void shuffleArray(int num, int minIdx, int maxIdx) {
 	}
 } 
 
+void getArrayDim(int array, int *dim2start, int *dim2end, int *dim1start, int *dim1end) {
+	ArrayHeader *ah = _arrays[readVar(array) & ~0x33539000];//(ArrayHeader *)getResourceAddress(rtString, readVar(array));
+	//assert(ah);
+	if (dim2start && *dim2start == -1) {
+		*dim2start = ah->dim2start;
+	}
+	if (dim2end && *dim2end == -1) {
+		*dim2end = ah->dim2end;
+	}
+	if (dim1start && *dim1start == -1) {
+		*dim1start = ah->dim1start;
+	}
+	if (dim1end && *dim1end == -1) {
+		*dim1end = ah->dim1end;
+	}
+}
+
+static int sortArrayOffset;
+
+static int compareByteArray(const void *a, const void *b) {
+	int va = *((const uint8 *)a + sortArrayOffset);
+	int vb = *((const uint8 *)b + sortArrayOffset);
+	return va - vb;
+}
+
+static int compareByteArrayReverse(const void *a, const void *b) {
+	int va = *((const uint8 *)a + sortArrayOffset);
+	int vb = *((const uint8 *)b + sortArrayOffset);
+	return vb - va;
+}
+
+static int compareIntArray(const void *a, const void *b) {
+	int va = (int16)(((const uint16*)a)[sortArrayOffset]);
+	int vb = (int16)(((const uint16*)b)[sortArrayOffset]);
+	return va - vb;
+}
+
+static int compareIntArrayReverse(const void *a, const void *b) {
+	int va = (int16)(((const uint16*)a)[sortArrayOffset]);
+	int vb = (int16)(((const uint16*)b)[sortArrayOffset]);
+	return vb - va;
+}
+
+static int compareDwordArray(const void *a, const void *b) {
+	int va = (int32)(((const uint32*)a)[sortArrayOffset]);
+	int vb = (int32)(((const uint32*)b)[sortArrayOffset]);
+	return va - vb;
+}
+
+static int compareDwordArrayReverse(const void *a, const void *b) {
+	int va = (int32)(((const uint32*)a)[sortArrayOffset]);
+	int vb = (int32)(((const uint32*)b)[sortArrayOffset]);
+	return vb - va;
+}
+
+
+/**
+ * Sort a row range in a two-dimensional array by the value in a given column.
+ *
+ * We sort the data in the row range [dim2start..dim2end], according to the value
+ * in column dim1start == dim1end.
+ */
+void sortArray(int array, int dim2start, int dim2end, int dim1start, int dim1end, int sortOrder) {
+	//debug(9, "sortArray(%d, [%d,%d,%d,%d], %d)", array, dim2start, dim2end, dim1start, dim1end, sortOrder);
+
+	//assert(dim1start == dim1end);
+	checkArrayLimits(array, dim2start, dim2end, dim1start, dim1end);
+	ArrayHeader *ah = _arrays[readVar(array) & ~0x33539000];//(ArrayHeader *)getResourceAddress(rtString, readVar(array));
+	//assert(ah);
+
+	const int num = dim2end - dim2start + 1;	// number of rows to sort
+	const int pitch = ah->dim1end - ah->dim1start + 1;	// length of a row = number of columns in it
+	const int offset = pitch * (dim2start - ah->dim2start);	// memory offset to the first row to be sorted
+	sortArrayOffset = dim1start - ah->dim1start;	// offset to the column by which we sort
+
+	// Now we just have to invoke qsort on the appropriate row range. We
+	// need to pass sortArrayOffset as an implicit parameter to the
+	// comparison functions, which makes it necessary to use a global
+	// (albeit local to this file) variable.
+	// This could be avoided by using qsort_r or a self-written portable
+	// analog (this function passes an additional, user determined
+	// parameter to the comparison function).
+	// Another idea would be to use Common::sort, but that only is
+	// suitable if you sort objects of fixed size, which must be known
+	// during compilation time; clearly this not the case here.
+	switch (ah->type) {
+	case kByteArray:
+	case kStringArray:
+		if (sortOrder <= 0) {
+			qsort(ah->data + offset, num, pitch, compareByteArray);
+		} else {
+			qsort(ah->data + offset, num, pitch, compareByteArrayReverse);
+		}
+		break;
+	case kIntArray:
+		if (sortOrder <= 0) {
+			qsort(ah->data + offset * 2, num, pitch * 2, compareIntArray);
+		} else {
+			qsort(ah->data + offset * 2, num, pitch * 2, compareIntArrayReverse);
+		}
+		break;
+	case kDwordArray:
+		if (sortOrder <= 0) {
+			qsort(ah->data + offset * 4, num, pitch * 4, compareDwordArray);
+		} else {
+			qsort(ah->data + offset * 4, num, pitch * 4, compareDwordArrayReverse);
+		}
+		break;
+	default:
+		printf("Error: Invalid array type %d\n", ah->type);
+	}
+}
+
 void _0x00_PushByte() {
 	push(fetchScriptByte());
 }
@@ -726,7 +855,7 @@ void _0x1C_WizImageOps()
 	int a, b;
 
 	int subOp = fetchScriptByte();
-
+	printf("Wiz (%d)\n", subOp);
 	switch (subOp) {
 	case 32: // HE99+
 		_wizParams.processFlags |= kWPFUseDefImgWidth;
@@ -1826,6 +1955,28 @@ void _0x37_Dim2Dim2Array()
 	defineArray(fetchScriptWord(), data, dim2start, dim2end, dim1start, dim1end); 
 }
 
+void _0x3A_SortArray() {
+	byte subOp = fetchScriptByte();
+
+	switch (subOp) {
+	case 129:
+	case 134: // HE100
+		{
+			int array = fetchScriptWord();
+			int sortOrder = pop();
+			int dim1end = pop();
+			int dim1start = pop();
+			int dim2end = pop();
+			int dim2start = pop();
+			getArrayDim(array, &dim2start, &dim2end, &dim1start, &dim1end);
+			sortArray(array, dim2start, dim2end, dim1start, dim1end, sortOrder);
+		}
+		break;
+	default:
+		printf("Error: o90_sortArray: Unknown case %d\n", subOp);
+	}
+} 
+
 void _0x43_WriteWordVar()
 {
 	writeVar(fetchScriptWord(), pop());
@@ -2672,9 +2823,15 @@ void _0x9D_ActorOps()
 		//a->setActorWalkSpeed(i, j);
 		break;
 	case 78:		// SO_SOUND
+		//printf("SO_SOUND:\n");
 		k = getStackList(args, ARRAYSIZE(args));
 		for (i = 0; i < k; i++)
+		{
 			a->_sound[i] = args[i];
+			//printf("%d\n", args[i]);
+		}
+		//while(scanKeys(), keysHeld() == 0);
+		//swiDelay(5000000);
 		break;
 	case 79:		// SO_WALK_ANIMATION
 		a->_walkFrame = pop();
@@ -2822,6 +2979,21 @@ void _0xA0_FindObject()
 	push(r);
 } 
 
+void _0xA1_PseudoRoom()
+{
+	int list[100];
+	int num, a, value;
+
+	num = getStackList(list, ARRAYSIZE(list));
+	value = pop();
+
+	while (--num >= 0) {
+		a = list[num];
+		//if (a > 0x7F)
+		//	_resourceMapper[a & 0x7F] = value;
+	}
+} 
+
 void _0xA4_ArrayOps()
 {
 	byte *data;
@@ -2935,14 +3107,11 @@ void _0xA4_ArrayOps()
 	case 212:		// SO_ASSIGN_2DIM_LIST
 		printf("SO_ASSIGN_2DIM_LIST\n");
 		len = getStackList(list, ARRAYSIZE(list));
-		printf("ReadVar\n");
 		id = readVar(array);
-		printf("Done\n");
-		if (id == 0)
-			printf("Error: Must DIM a two dimensional array before assigning\n");
+		if (id == 0) printf("Error: Must DIM a two dimensional array before assigning\n");
 		c = pop();
 		while (--len >= 0) {
-			//writeArray(array, c, len, list[len]);
+			writeArray(array, c, len, list[len]);
 		}
 		break;
 	default:
@@ -3022,7 +3191,9 @@ void _0xA9_Wait()
 		//printf("VAR(VAR_HAVE_MSG) = %X\n", VAR(VAR_HAVE_MSG));
 		if (VAR(VAR_HAVE_MSG))
 		{
-			_haveMsg = 0;
+			if(_haveMsg >= 64) _haveMsg-=64;
+			else _haveMsg = 0;
+			
 			break;
 		}
 		return;
@@ -3424,9 +3595,22 @@ void _0xD2_GetAnimateVariable()
 {
 	int var = pop();
 	Actor *a = &_actors[pop()];//derefActor(pop(), "o6_getAnimateVariable");
-	push(getAnimVar(a, var)); 
-	if(getAnimVar(a, var) == 0) setAnimVar(a, var, 1);
-	else setAnimVar(a, var, 0);
+	push(getAnimVar(a, var));
+	//if(getAnimVar(a, var) == 0) setAnimVar(a, var, 1);
+	//else setAnimVar(a, var, 0);
+}
+
+void _0xD5_JumpToScript()
+{
+	int args[25];
+	int script;
+	byte flags;
+
+	getStackList(args, ARRAYSIZE(args));
+	script = pop();
+	flags = fetchScriptByte();
+	stopObjectCode();
+	runScript(script, (flags == 199 || flags == 200), (flags == 195 || flags == 200), args);
 }
 
 void _0xD6_BAnd()

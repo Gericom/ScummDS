@@ -12,6 +12,7 @@
 #include <wiz.h>
 #include <graphics.h>
 #include <render.h>
+#include <room.h>
 
 WizParameters _wizParams;
 
@@ -32,6 +33,7 @@ AWIZ_t* readAWIZ()
 	fgetpos(HE1_File, &pos);
 	uint32_t end = pos + SWAP_CONSTANT_32(size) - 8;
 	AWIZ_t* AWIZ = (AWIZ_t*)malloc(sizeof(AWIZ_t));
+	AWIZ->RGBS = NULL;
 	while(pos < (end - 4))
 	{
 		readU32LE(HE1_File, &sig);
@@ -82,13 +84,14 @@ void displayWizImage(WizImage *pwi) {
 		const Common::Rect *r = NULL;
 		drawWizImage(pwi->resNum, pwi->state, 0, 0, pwi->x1, pwi->y1, 0, 0, 0, r, pwi->flags, 0, _vm->getHEPaletteSlot(0));
 	}*/
-	if(pwi->flags)
+	//if(pwi->flags)
 	{
 		uint32_t offs = getAWIZOffset(HE0_File, &HE0_Data, pwi->resNum);
 		printf("displayWizImage: %d (Offs: 0x%X)\n", pwi->resNum, offs);
 		fseek(HE1_File, offs, SEEK_SET);
 		AWIZ_t* AWIZ = readAWIZ();
-		ConvertWIZImage(AWIZ->WIZD, AWIZ->RGBS, pwi->x1, pwi->y1, AWIZ->Width, AWIZ->Height, AWIZ->Compression);
+		if(AWIZ->RGBS != NULL) ConvertWIZImage(AWIZ->WIZD, AWIZ->RGBS, pwi->x1, pwi->y1, AWIZ->Width, AWIZ->Height, AWIZ->Compression);
+		else ConvertWIZImage(AWIZ->WIZD, &RoomResource->RMDA->PALS->WRAP->APAL->data, pwi->x1, pwi->y1, AWIZ->Width, AWIZ->Height, AWIZ->Compression);
 		freeAWIZ(AWIZ);
 		//while(1);
 	}
@@ -291,7 +294,7 @@ void loadWizCursor(int resId, int palette) {
 	printf("WizCursor: %d (Offs: 0x%X)\n", resId, offs);
 	fseek(HE1_File, offs, SEEK_SET);
 	AWIZ_t* AWIZ = readAWIZ();
-	if(AWIZ->RGBS != NULL)
-		ConvertWIZCursor(AWIZ->WIZD, (uint8_t*)&CursorBuffer[0], AWIZ->RGBS, AWIZ->Width, AWIZ->Height, AWIZ->Compression);
+	if(AWIZ->RGBS != NULL) ConvertWIZCursor(AWIZ->WIZD, (uint8_t*)&CursorBuffer[0], AWIZ->RGBS, AWIZ->Width, AWIZ->Height, AWIZ->Compression);
+	else ConvertWIZCursor(AWIZ->WIZD, (uint8_t*)&CursorBuffer[0], &RoomResource->RMDA->PALS->WRAP->APAL->data, AWIZ->Width, AWIZ->Height, AWIZ->Compression);
 	freeAWIZ(AWIZ);
 }

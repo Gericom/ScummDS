@@ -217,7 +217,7 @@ void updateScriptPtr() {
 	if (_currentScript == 0xFF)
 		return;
 
-	vm.slot[_currentScript].offs = _scriptPointer - _scriptOrgPointer;
+	vm.slot[_currentScript].offs = (uint32)_scriptPointer - (uint32)_scriptOrgPointer;
 }
 
 /* Get the code pointer to a script */
@@ -226,6 +226,14 @@ void getScriptBaseAddress() {
 	int idx;
 
 	//void* old = (void*)_scriptOrgPointer;
+	//if(_scriptOrgPointer != NULL) 
+	//{
+		//printf("Freeing (_scriptOrgPointer = 0x%X)\n", (uint32_t)_scriptOrgPointer);
+		//while(scanKeys(), keysHeld() == 0);
+		//swiDelay(5000000);
+		//free(_scriptOrgPointer);
+		//_scriptOrgPointer = NULL;
+	//}
 
 	if (_currentScript == 0xFF)
 		return;
@@ -303,7 +311,7 @@ void refreshScriptPointer() {
 
 /** Execute a script - Read opcode, and execute it from the table */
 void executeScript() {
-	int c;
+	//int c;
 	while (_currentScript != 0xFF) {
 
 		_opcode = fetchScriptByte();
@@ -363,6 +371,7 @@ void executeOpcode(byte i)
 	case 0x28: _0x28_SetSpriteGroupInfo(); break;
 	case 0x34: _0x34_FindAllObjectsWithClassOf(); break;
 	case 0x37: _0x37_Dim2Dim2Array(); break;
+	case 0x3A: _0x3A_SortArray(); break;
 	case 0x43: _0x43_WriteWordVar(); break;
 	case 0x46: _0x46_ByteArrayWrite(); break;
 	case 0x47: _0x47_WordArrayWrite(); break;
@@ -407,6 +416,7 @@ void executeOpcode(byte i)
 	case 0x9D: _0x9D_ActorOps(); break;
 	case 0x9F: _0x9F_GetActorFromXY(); break;
 	case 0xA0: _0xA0_FindObject(); break;
+	case 0xA1: _0xA1_PseudoRoom(); break;
 	case 0xA4: _0xA4_ArrayOps(); break;
 	case 0xA5: _0xA5_FontUnk(); break;
 	case 0xA6: _0xA6_DrawBox(); break;
@@ -435,6 +445,7 @@ void executeOpcode(byte i)
 	case 0xD0: _0xD0_GetDateTime(); break;
 	case 0xD1: _0xD1_StopTalking(); break;
 	case 0xD2: _0xD2_GetAnimateVariable(); break;
+	case 0xD5: _0xD5_JumpToScript(); break;
 	case 0xD6: _0xD6_BAnd(); break;
 	case 0xD7: _0xD7_BOr(); break;
 	case 0xD9: _0xD9_CloseFile(); break;
@@ -489,7 +500,7 @@ int fetchScriptDWordSigned() {
 } 
 
 int readVar(uint var) {
-	int a;
+	//int a;
 
 	//printf("readvar(%d)\n", var);
 
@@ -577,6 +588,12 @@ void writeVar(uint var, int value) {
 			}
 		}*/
 
+		if(var > 1024)
+		{
+			printf("Error: Out of range!\n");
+			return;
+		}
+
 		_scummVars[var] = value;
 
 		//if ((_varwatch == (int)var) || (_varwatch == 0)) {
@@ -593,6 +610,13 @@ void writeVar(uint var, int value) {
 		//if (_game.heversion >= 80) {
 			var &= 0xFFF;
 		//	assertRange(0, var, _numRoomVariables - 1, "room variable (writing)");
+
+			if(var > 4096)
+		{
+			printf("Error: Out of range!\n");
+			return;
+		}
+
 			_roomVars[var] = value;
 
 		//}* else {
@@ -618,6 +642,12 @@ void writeVar(uint var, int value) {
 		//	assertRange(0, var, 25, "local variable (writing)");
 		//else
 		//	assertRange(0, var, 20, "local variable (writing)");
+
+			if(var > 26)
+		{
+			printf("Error: Out of range!\n");
+			return;
+		}
 
 		vm.localvar[_currentScript][var] = value;
 		return;

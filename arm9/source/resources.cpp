@@ -39,7 +39,7 @@ void* getLocalScriptPtr(int id)
 {
 	for(int i = 0; i < RoomResource->RMDA->NrLocalScripts; i++)
 	{
-		printf("%d\n", RoomResource->RMDA->LocalScriptIds[i]);
+		//printf("%d\n", RoomResource->RMDA->LocalScriptIds[i]);
 		if(RoomResource->RMDA->LocalScriptIds[i] == id)
 		{
 			fseek(HE1_File, RoomResource->RMDA->LocalScriptOffsets[i], SEEK_SET);

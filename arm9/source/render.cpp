@@ -43,6 +43,9 @@ int GetFreeFrameBuffer()
 			return i;
 		}
 	}
+	printf("No framebuffers Left!\n");
+	//while(scanKeys(), keysHeld() == 0);
+	//swiDelay(5000000);
 	return 0;
 }
 

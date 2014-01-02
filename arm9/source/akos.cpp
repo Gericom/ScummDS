@@ -1303,8 +1303,9 @@ void renderCostume(Actor* a)
 		case 0xC015://Start Sound
 			{
 				byte sound = *seq++;//Data[Offset++];
-				printf("0xC015: Start Sound (%d)\n", sound);
-				while(1);
+				printf("0xC015: Start Sound (%d = %d)\n", sound, a->_sound[sound]);
+				addSoundToQueue2(a->_sound[sound], 0, 0, 8);
+				//while(1);
 			}
 			break;
 		case 0xC018://ifSoundIsRunning(uword jmp,byte snd) 
@@ -1461,7 +1462,8 @@ _0xC020:
 			{
 				byte sound = *seq++;
 				printf("0xC042: Start Sound (%d)\n", sound);
-				while(1);
+				addSoundToQueue2(a->_sound[sound], 0, 0, 8);
+				//while(1);
 			}
 			break;
 		case 0xC070:

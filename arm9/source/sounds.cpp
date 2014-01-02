@@ -12,6 +12,8 @@
 #include <sounds.h>
 #include <scumm.h>
 
+//#define NOSOUND
+
 int32 _heSndSoundId;
 int32 _heSndOffset;
 int32 _heSndChannel;
@@ -67,8 +69,13 @@ digi:
 			readU32LE(handle, &sig);
 			readU32LE(handle, &size);
 		}
+#ifndef NOSOUND
 		void* data = malloc(SWAP_CONSTANT_32(size) - 8);
 		readSoundBytes(handle, (uint8_t*)data, SWAP_CONSTANT_32(size) - 8);
+#else
+		void* data = NULL;
+		fseek(handle, SWAP_CONSTANT_32(size) - 8, SEEK_CUR);
+#endif
 		*length = SWAP_CONSTANT_32(size) - 8;
 		printf("Sound: OK\n");
 		return data;
@@ -85,9 +92,13 @@ digi:
 		readU32LE(handle, &sig);
 		printf("Sound: %c%c%c%c\n", ((char*)&sig)[0], ((char*)&sig)[1], ((char*)&sig)[2], ((char*)&sig)[3]);
 		readU32LE(handle, &size);
-
+#ifndef NOSOUND
 		void* data = malloc(SWAP_CONSTANT_32(size) - 8);
 		readSoundBytes(handle, (uint8_t*)data, SWAP_CONSTANT_32(size) - 8);
+#else
+		void* data = NULL;
+		fseek(handle, SWAP_CONSTANT_32(size) - 8, SEEK_CUR);
+#endif
 		*length = SWAP_CONSTANT_32(size) - 8;
 		printf("Sound: OK\n");
 		return data;
@@ -166,7 +177,9 @@ void doSound()
 			if(CurrentPlayingSounds[i]->endtime <= getMillis())
 			{
 				soundKill(CurrentPlayingSounds[i]->soundid);
+#ifndef NOSOUND
 				free(CurrentPlayingSounds[i]->data);
+#endif
 				free(CurrentPlayingSounds[i]);
 				CurrentPlayingSounds[i] = NULL;
 			}
@@ -223,9 +236,11 @@ void doSound()
 			
 			CurrentPlayingSounds[slot]->sound = snd;
 			CurrentPlayingSounds[slot]->length = length;
+#ifndef NOSOUND
 			CurrentPlayingSounds[slot]->data = data;
 			soundEnable();
 			CurrentPlayingSounds[slot]->soundid = soundPlaySample(data, SoundFormat_8Bit, length, rate, 127, 64, false, 0);
+#endif
 			CurrentPlayingSounds[slot]->starttime = getMillis();
 			CurrentPlayingSounds[slot]->endtime = CurrentPlayingSounds[slot]->starttime + (length * 1000) / rate;
 			//printf("Starttime: %d\n", CurrentPlayingSounds[slot]->starttime);
@@ -254,7 +269,9 @@ void stopSound(int id)
 			if(CurrentPlayingSounds[i]->sound == id)
 			{
 				soundKill(CurrentPlayingSounds[i]->soundid);
+#ifndef NOSOUND
 				free(CurrentPlayingSounds[i]->data);
+#endif
 				free(CurrentPlayingSounds[i]);
 				CurrentPlayingSounds[i] = NULL;
 			}

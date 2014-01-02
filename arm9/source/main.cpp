@@ -57,8 +57,8 @@ void processInput()
 
 //const char* he = "/scumm/PJS2DEMO.HE";
 
-const char* he0 = "/scumm/PJS2DEMO.HE0";
-const char* he1 = "/scumm/PJS2DEMO.(A)";
+//const char* he0 = "/scumm/PJS2DEMO.HE0";
+//const char* he1 = "/scumm/PJS2DEMO.(A)";
 //const char* he4 = "/scumm/PJS2DEMO.HE4";
 
 //const char* he0 = "/scumm/F4-DEMO.HE0";
@@ -69,8 +69,8 @@ const char* he1 = "/scumm/PJS2DEMO.(A)";
 
 //const char* he = "/scumm/DOOLHOF.HE";
 
-//const char* he0 = "/scumm/DOOLHOF.HE0";
-//const char* he1 = "/scumm/DOOLHOF.(A)";
+const char* he0 = "/scumm/DOOLHOF.HE0";
+const char* he1 = "/scumm/DOOLHOF.(A)";
 
 //const char* he0 = "/scumm/SPYDEMO.HE0";
 //const char* he1 = "/scumm/SPYDEMO.(A)";
