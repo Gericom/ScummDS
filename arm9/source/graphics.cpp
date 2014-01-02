@@ -263,6 +263,8 @@ void ConvertWIZImage(uint32_t DataOffset, void* Palette, int X, int Y, uint32_t 
 			decompressWizImage((uint8*)&FrameBuffers[GetFreeFrameBuffer()][0], 640 * 2, DataOffset, X, Y, Width, Height, Palette);
 			//return //ConvertWizImage(DataOffset, Palette, Width, Height);
 			break;
+		default:
+			break;
 	}
 }
 
@@ -273,6 +275,8 @@ void ConvertWIZCursor(uint32_t DataOffset, uint8_t* Dst, void* Palette, uint32_t
 		case 1:
 			decompressWizImage(Dst, 32 * 2, DataOffset, 0, 0, Width, Height, Palette);
 			//return //ConvertWizImage(DataOffset, Palette, Width, Height);
+			break;
+		default:
 			break;
 	}
 }

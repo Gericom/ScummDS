@@ -151,7 +151,15 @@ void readRoom(FILE* handle, LFLF_t* LFLF, uint32_t offset)
 						readU32LE(handle, &size);
 						fgetpos(handle, &LFLF->RMDA->OBCD[objectidx]->OCDHOffset);
 						readU16LE(handle, &LFLF->RMDA->OBCD[objectidx]->ObjectId);
-						fseek(handle, SWAP_CONSTANT_32(size) - 10, SEEK_CUR);
+						/*uint16 x;
+						readU16LE(handle, &x);
+						LFLF->RMDA->OBCD[objectidx]->X = (int16)x;
+						uint16 y;
+						readU16LE(handle, &y);
+						LFLF->RMDA->OBCD[objectidx]->Y = (int16)y;
+						readU16LE(handle, &LFLF->RMDA->OBCD[objectidx]->Width);
+						readU16LE(handle, &LFLF->RMDA->OBCD[objectidx]->Height);*/
+						fseek(handle, SWAP_CONSTANT_32(size) - 8 - /*10*/2, SEEK_CUR);
 
 						readU32LE(handle, &sig);
 						readU32LE(handle, &size);
@@ -178,9 +186,9 @@ void readRoom(FILE* handle, LFLF_t* LFLF, uint32_t offset)
 						break;
 					case MKTAG('N', 'L', 'S', 'C'):
 						readU16LE(handle, &LFLF->RMDA->NrLocalScripts);
-						LFLF->RMDA->LocalScriptIds = new uint16_t[LFLF->RMDA->NrLocalScripts];
-						LFLF->RMDA->LocalScriptOffsets = new fpos_t[LFLF->RMDA->NrLocalScripts];
-						LFLF->RMDA->LocalScriptLengths = new uint32_t[LFLF->RMDA->NrLocalScripts];
+						LFLF->RMDA->LocalScriptIds = (uint16_t*)malloc(sizeof(uint16_t) * LFLF->RMDA->NrLocalScripts);//new uint16_t[LFLF->RMDA->NrLocalScripts];
+						LFLF->RMDA->LocalScriptOffsets = (fpos_t*)malloc(sizeof(fpos_t) * LFLF->RMDA->NrLocalScripts);//new fpos_t[LFLF->RMDA->NrLocalScripts];
+						LFLF->RMDA->LocalScriptLengths = (uint32_t*)malloc(sizeof(uint32_t) * LFLF->RMDA->NrLocalScripts);//new uint32_t[LFLF->RMDA->NrLocalScripts];
 						printf("Local Scripts: %d\n", LFLF->RMDA->NrLocalScripts);
 						break;
 					default:

@@ -19,7 +19,7 @@ uint16_t CursorBuffer[32 * 32 * 2];
 
 static bool done = false;
 
-#define VRAMCNT				(*(vu32*)0x04000240)
+#define VCOUNT				(*(vu16*)0x04000006)
 
 void InitFrameBuffers()
 {
@@ -150,6 +150,9 @@ void RenderFrame(int textureID)
 	glLoadIdentity();
 
 	glBindTexture(0, textureID);*/
+
+	//while(VCOUNT != 144);
+
 	glTexImage2D(0, 0, GL_RGB, TEXTURE_SIZE_512, TEXTURE_SIZE_256, 0, TEXGEN_TEXCOORD, (uint8_t*)&ResultFrameBuffer[0]);
 	/*
 

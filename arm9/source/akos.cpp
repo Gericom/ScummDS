@@ -133,7 +133,7 @@ AKOS_t* readAKOS()
 	while(pos < (end - 4))
 	{
 		readU32LE(HE1_File, &sig);
-		printf("%c%c%c%c\n", ((char*)&sig)[0], ((char*)&sig)[1], ((char*)&sig)[2], ((char*)&sig)[3]);
+		//printf("%c%c%c%c\n", ((char*)&sig)[0], ((char*)&sig)[1], ((char*)&sig)[2], ((char*)&sig)[3]);
 		readU32LE(HE1_File, &size);
 		switch(sig)
 		{
@@ -1253,7 +1253,7 @@ void renderCostume(Actor* a)
 	//readBytes(HE1_File, seqstart, a->_cost.AKOS->AKSQLength);
 
 	uint8_t* seq = seqstart + a->_cost.curpos[limb];//(uint8_t*)a->_cost.AKOS->AKSQ + a->_cost.curpos[limb];
-	printf("Start: %x\n", a->_cost.curpos[limb]);
+	//printf("Start: %x\n", a->_cost.curpos[limb]);
 	while (/*((uint32_t)seq - (uint32_t)a->_cost.AKOS->AKSQ) < a->_cost.end[limb]*/true)
 	{
 		//while(scanKeys(), keysHeld() == 0);
@@ -1262,11 +1262,11 @@ void renderCostume(Actor* a)
 		if (code & 0x80)
 			code = (ushort)((code << 8) | *seq++);
 
-		printf("Code (%X)\n", code);
+		//printf("Code (%X)\n", code);
 
 		if ((code >> 8) != 0xC0)
 		{
-			printf("Bitmap (%X)\n", code);
+			//printf("Bitmap (%X)\n", code);
 			//Bitmap b2 = AKOS.GetFrame(code & 0xFFF);
 			//a->_cost.curpos[limb] = -2;
 			//freeAKOS(a->_cost.AKOS);

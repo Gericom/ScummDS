@@ -112,6 +112,7 @@ void decodeScriptString(byte *dst, bool scriptString) {
 			chr = string[num++];
 			switch (chr) {
 			case 'b':
+				val++;
 				//dst += sprintf((char *)dst, "%b", args[val++]);
 				break;
 			case 'c':
@@ -121,11 +122,12 @@ void decodeScriptString(byte *dst, bool scriptString) {
 				dst += sprintf((char *)dst, "%d", args[val++]);
 				break;
 			case 's':
-				src = (byte*)_arrays[args[val++]]->data;//getStringAddress(args[val++]);
-				if (src) {
-				while (*src != 0)
-				*dst++ = *src++;
-				}
+				val++;
+				//src = (byte*)_arrays[args[val++]]->data[0];//getStringAddress(args[val++]);
+				//if (src) {
+				//while (*src != 0)
+				//*dst++ = *src++;
+				//}
 				break;
 			case 'x':
 				dst += sprintf((char *)dst, "%x", args[val++]);
@@ -321,7 +323,7 @@ int readArray(int array, int idx2, int idx1) {
 
 	ArrayHeader *ah = _arrays[readVar(array) & ~0x33539000];//(ArrayHeader *)getResourceAddress(rtString, readVar(array));
 
-	if (!ah)
+	if (ah == NULL)
 	{
 		printf("Error: readArray: invalid array %d (%d)\n", array, readVar(array));
 		return 0;
@@ -366,7 +368,7 @@ void writeArray(int array, int idx2, int idx1, int value) {
 
 	ArrayHeader *ah = _arrays[readVar(array) & ~0x33539000];//(ArrayHeader *)getResourceAddress(rtString, readVar(array));
 
-	if (!ah)
+	if (ah == NULL)
 	{
 		printf("Error: writeArray: Invalid array (%d) reference\n", readVar(array));
 		return;
@@ -1955,6 +1957,126 @@ void _0x37_Dim2Dim2Array()
 	defineArray(fetchScriptWord(), data, dim2start, dim2end, dim1start, dim1end); 
 }
 
+void _0x39_GetLinesIntersectionPoint() 
+{
+	int var_ix = fetchScriptWord();
+	int var_iy = fetchScriptWord();
+	int line2_y2 = pop();
+	int line2_x2 = pop();
+	int line2_y1 = pop();
+	int line2_x1 = pop();
+	int line1_y2 = pop();
+	int line1_x2 = pop();
+	int line1_y1 = pop();
+	int line1_x1 = pop();
+
+	int result = 0;
+	int ix = 0;
+	int iy = 0;
+
+	bool isLine1Point = (line1_x1 == line1_x2 && line1_y1 == line1_y2);
+	bool isLine2Point = (line2_x1 == line2_x2 && line2_y1 == line2_y2);
+
+	if (isLine1Point) {
+		if (isLine2Point) {
+			if (line1_x1 == line2_x1 && line1_y1 == line2_y2) {
+				ix = line1_x1;
+				iy = line2_x1;
+				result = 1;
+			}
+		} else {
+			// 1 point and 1 line
+			int dx2 = line2_x2 - line2_x1;
+			if (dx2 != 0) {
+				int dy2 = line2_y2 - line2_y1;
+				float y = (float)dy2 / dx2 * (line1_x1 - line2_x1) + line2_y1 + .5f;
+				if (line1_y1 == (int)y) {
+					ix = line1_x1;
+					iy = line1_y1;
+					result = 1;
+				}
+			} else {
+				// vertical line
+				if (line1_x1 == line2_x1) {
+					if (line2_y1 > line2_y2) {
+						if (line1_y1 >= line2_y2 && line1_y1 <= line2_y1) {
+							ix = line1_x1;
+							iy = line1_y1;
+							result = 1;
+						}
+					} else {
+						if (line1_y1 >= line2_y1 && line1_y1 <= line2_y2) {
+							ix = line1_x1;
+							iy = line1_y1;
+							result = 1;
+						}
+					}
+				}
+			}
+		}
+	} else {
+		if (isLine2Point) {
+			// 1 point and 1 line
+			int dx1 = line1_x2 - line1_x1;
+			if (dx1 != 0) {
+				int dy1 = line1_y2 - line1_y1;
+				float y = (float)dy1 / dx1 * (line2_x1 - line1_x1) + line1_y1 + .5f;
+				if (line2_y1 == (int)y) {
+					ix = line2_x1;
+					iy = line2_y1;
+					result = 1;
+				}
+			} else {
+				// vertical line
+				if (line2_x1 == line1_x1) {
+					if (line1_y1 > line1_y2) {
+						if (line2_y1 >= line1_y2 && line2_y1 <= line1_y1) {
+							ix = line2_x1;
+							iy = line2_y1;
+							result = 1;
+						}
+					} else {
+						if (line2_y1 >= line1_y1 && line2_y1 <= line1_y2) {
+							ix = line2_x2;
+							iy = line2_y1;
+							result = 1;
+						}
+					}
+				}
+			}
+		} else {
+			// 2 lines
+			int dy1 = line1_y2 - line1_y1;
+			int dx1 = line1_x2 - line1_x1;
+			int dy2 = line2_y2 - line2_y1;
+			int dx2 = line2_x2 - line2_x1;
+			int det = dx1 * dy2 - dx2 * dy1;
+			int cross_p1 = dx1 * (line1_y1 - line2_y1) - dy1 * (line1_x1 - line2_x1);
+			int cross_p2 = dx2 * (line1_y1 - line2_y1) - dy2 * (line1_x1 - line2_x1);
+			if (det == 0) {
+				// parallel lines
+				if (cross_p2 == 0) {
+					ix = abs(line2_x2 + line2_x1) / 2;
+					iy = abs(line2_y2 + line2_y1) / 2;
+					result = 2;
+				}
+			} else {
+				float rcp1 = (float)cross_p1 / det;
+				float rcp2 = (float)cross_p2 / det;
+				if (rcp1 >= 0 && rcp1 <= 1 && rcp2 >= 0 && rcp2 <= 1) {
+					ix = (int)(dx1 * rcp2 + line1_x1 + .5f);
+					iy = (int)(dy1 * rcp2 + line1_y1 + .5f);
+					result = 1;
+				}
+			}
+		}
+	}
+
+	writeVar(var_ix, ix);
+	writeVar(var_iy, iy);
+	push(result);
+} 
+
 void _0x3A_SortArray() {
 	byte subOp = fetchScriptByte();
 
@@ -2096,9 +2218,9 @@ void _0x61_DrawObject()
 	}
 
 	int object = pop();
+	printf("Draw Object %d at (%d, %d) with state %d\n", object, x, y, state);
 	int objnum = getObjectIndex(object);
-	if (objnum == -1)
-	return;
+	if (objnum == -1) return;
 
 	if (y != -100 && x != -100) {
 		//_objs[objnum].x_pos = x * 8;
@@ -2251,7 +2373,7 @@ void _0x6E_SetClass()
 void _0x6F_GetState()
 {
 	int obj = pop();
-	push(/*getState(obj)*/0); 
+	push(/*getState(obj)*/1); 
 }
 
 void _0x70_SetState()
@@ -2963,6 +3085,78 @@ void _0x9D_ActorOps()
 	}
 }
 
+void _0x9E_PaletteOps() 
+{
+	int a, b, c, d, e;
+
+	byte subOp = fetchScriptByte();
+
+	switch (subOp) {
+	case 57:
+		pop();
+		//_hePaletteNum = pop();
+		break;
+	case 63:
+		b = pop();
+		a = pop();
+		//if (_hePaletteNum != 0) {
+			//setHEPaletteFromImage(_hePaletteNum, a, b);
+		//}
+		break;
+	case 66:
+		e = pop();
+		d = pop();
+		c = pop();
+		b = pop();
+		a = pop();
+		//if (_hePaletteNum != 0) {
+		//	for (; a <= b; ++a) {
+				//setHEPaletteColor(_hePaletteNum, a, c, d, e);
+		//	}
+		//}
+		break;
+	case 70:
+		c = pop();
+		b = pop();
+		a = pop();
+		//if (_hePaletteNum != 0) {
+		//	for (; a <= b; ++a) {
+				//copyHEPaletteColor(_hePaletteNum, a, c);
+		//	}
+		//}
+		break;
+	case 76: //HE99+
+		a = pop();
+		//if (_hePaletteNum != 0) {
+			//setHEPaletteFromCostume(_hePaletteNum, a);
+		//}
+		break;
+	case 86:
+		a = pop();
+		//if (_hePaletteNum != 0) {
+			//copyHEPalette(_hePaletteNum, a);
+		//}
+		break;
+	case 175:
+		b = pop();
+		a = pop();
+		//if (_hePaletteNum != 0) {
+			//setHEPaletteFromRoom(_hePaletteNum, a, b);
+		//}
+		break;
+	case 217:
+		//if (_hePaletteNum != 0) {
+			//restoreHEPalette(_hePaletteNum);
+		//}
+		break;
+	case 255:
+		//_hePaletteNum = 0;
+		break;
+	default:
+		printf("Error: o90_paletteOps: Unknown case %d\n", subOp);
+	}
+} 
+
 void _0x9F_GetActorFromXY()
 {
 	int y = pop();
@@ -3377,6 +3571,34 @@ void _0xB9_PrintEgo()
 {
 	push(VAR(VAR_EGO));
 	decodeParseString(0, 1);
+}
+
+void _0xBA_TalkActor()
+{
+	Actor *a;
+
+	int act = pop();
+
+	_string[0].loadDefault();
+
+	// A value of 225 can occur when examining the gold in the mine of pajama, after mining the gold.
+	// This is a script bug, the script should set the subtitle color, not actor number.
+	// This script bug was fixed in the updated version of pajama.
+	if (act == 225) {
+		_string[0].color = act;
+	} else {
+		_actorToPrintStrFor = act;
+		if (_actorToPrintStrFor != 0xFF) {
+			a = &_actors[_actorToPrintStrFor];//derefActor(_actorToPrintStrFor, "o72_talkActor");
+			_string[0].color = a->_talkColor;
+		}
+	}
+
+	printf("actorTalk:\n");
+	printf("%s\n", _scriptPointer);
+	actorTalk(_scriptPointer);
+
+	_scriptPointer += resStrLen(_scriptPointer) + 1;
 }
 
 void _0xBC_DimArray()

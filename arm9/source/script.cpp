@@ -371,6 +371,7 @@ void executeOpcode(byte i)
 	case 0x28: _0x28_SetSpriteGroupInfo(); break;
 	case 0x34: _0x34_FindAllObjectsWithClassOf(); break;
 	case 0x37: _0x37_Dim2Dim2Array(); break;
+	case 0x39: _0x39_GetLinesIntersectionPoint(); break;
 	case 0x3A: _0x3A_SortArray(); break;
 	case 0x43: _0x43_WriteWordVar(); break;
 	case 0x46: _0x46_ByteArrayWrite(); break;
@@ -414,6 +415,7 @@ void executeOpcode(byte i)
 	case 0x9B: _0x9B_ResourceRoutines(); break;
 	case 0x9C: _0x9C_RoomOps(); break;
 	case 0x9D: _0x9D_ActorOps(); break;
+	case 0x9E: _0x9E_PaletteOps(); break;
 	case 0x9F: _0x9F_GetActorFromXY(); break;
 	case 0xA0: _0xA0_FindObject(); break;
 	case 0xA1: _0xA1_PseudoRoom(); break;
@@ -433,6 +435,7 @@ void executeOpcode(byte i)
 	case 0xB7: _0xB7_PrintSystem(); break;
 	case 0xB8: _0xB8_PrintActor(); break;
 	case 0xB9: _0xB9_PrintEgo(); break;
+	case 0xBA: _0xBA_TalkActor(); break;
 	case 0xBC: _0xBC_DimArray(); break;
 	case 0xBD: _0xBD_StopObjectCode(); break;
 	case 0xBF: _0xBF_StartScriptQuick2(); break;

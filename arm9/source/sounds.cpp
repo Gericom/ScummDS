@@ -239,7 +239,7 @@ void doSound()
 #ifndef NOSOUND
 			CurrentPlayingSounds[slot]->data = data;
 			soundEnable();
-			CurrentPlayingSounds[slot]->soundid = soundPlaySample(data, SoundFormat_8Bit, length, rate, 127, 64, false, 0);
+			CurrentPlayingSounds[slot]->soundid = soundPlaySample(data, SoundFormat_8Bit, length, rate, 255, 64, false, 0);
 #endif
 			CurrentPlayingSounds[slot]->starttime = getMillis();
 			CurrentPlayingSounds[slot]->endtime = CurrentPlayingSounds[slot]->starttime + (length * 1000) / rate;

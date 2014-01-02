@@ -48,7 +48,11 @@ void processInput()
 
 	if(pressed & KEY_R) abortCutscene();
 
-	if(held & KEY_TOUCH){ VAR(VAR_LEFTBTN_HOLD) = 1; printf("Left Mouse!\n");}
+	if(pressed & KEY_TOUCH)
+	{ 
+		VAR(VAR_LEFTBTN_HOLD) = 1;
+		printf("Left Mouse!\n");
+	}
 	else VAR(VAR_LEFTBTN_HOLD) = 0;
 	if (!(held & KEY_TOUCH) || touch.rawx == 0 || touch.rawy == 0) return;
 	_mouse_x = touch.px * 2.5;
@@ -57,8 +61,8 @@ void processInput()
 
 //const char* he = "/scumm/PJS2DEMO.HE";
 
-//const char* he0 = "/scumm/PJS2DEMO.HE0";
-//const char* he1 = "/scumm/PJS2DEMO.(A)";
+const char* he0 = "/scumm/PJS2DEMO.HE0";
+const char* he1 = "/scumm/PJS2DEMO.(A)";
 //const char* he4 = "/scumm/PJS2DEMO.HE4";
 
 //const char* he0 = "/scumm/F4-DEMO.HE0";
@@ -69,8 +73,11 @@ void processInput()
 
 //const char* he = "/scumm/DOOLHOF.HE";
 
-const char* he0 = "/scumm/DOOLHOF.HE0";
-const char* he1 = "/scumm/DOOLHOF.(A)";
+//const char* he0 = "/scumm/DOOLHOF.HE0";
+//const char* he1 = "/scumm/DOOLHOF.(A)";
+
+//const char* he0 = "/scumm/ZOODEMO.HE0";//op
+//const char* he1 = "/scumm/ZOODEMO.HE1";
 
 //const char* he0 = "/scumm/SPYDEMO.HE0";
 //const char* he1 = "/scumm/SPYDEMO.(A)";
@@ -165,7 +172,7 @@ int main()
 			return 1;
 		}
 		printf("Done!\n");
-		fclose(HE4_File);
+		//fclose(HE4_File);
 	}*/
 	
 	_numGlobalScripts = getScriptCount(HE0_File, &HE0_Data);
@@ -213,7 +220,7 @@ int main()
 			mallocs[i] = NULL;
 		}
 		mallocsoffset = 0;*/
-		printf("Refresh!\n");
+		//printf("Refresh!\n");
 		VAR(VAR_TIMER) = diff * 60 / 1000; 
 		//VAR(VAR_TIMER_TOTAL) += diff * 60 / 1000;
 
