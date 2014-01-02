@@ -17,4 +17,4 @@ The games listed here do NOT run fully correctly (since the interpreter is just 
 * <b>Freddi Fish and Luther's Maze Madness</b> (Dutch, Freddi Fish en Loebas' Dolle Doolhof) - The intro cutscene doesn't work with sound enabled
 * <b>Freddi Fish 4 Demo</b> (Dutch) - Depends on skipping cutscenes
 * <b>Pajama Sam 2 Demo</b> (Dutch)
-* <b>Spy Fox 2 Demo<b> (Dutch)
+* <b>Spy Fox 2 Demo</b> (Dutch)
