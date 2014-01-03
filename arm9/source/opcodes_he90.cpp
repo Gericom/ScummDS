@@ -899,6 +899,88 @@ void _0x26_SetSpriteInfo()
 	}
 }
 
+void _0x27_GetSpriteGroupInfo()
+{
+	int32 tx, ty;
+	int spriteGroupId, type;
+
+	byte subOp = fetchScriptByte();
+
+	switch (subOp) {
+	case 8: // HE 99+
+		spriteGroupId = pop();
+		//if (spriteGroupId)
+		//	push(getGroupSpriteArray(spriteGroupId));
+		//else
+			push(0);
+		break;
+	case 30:
+		spriteGroupId = pop();
+		//if (spriteGroupId) {
+		//	_sprite->getGroupPosition(spriteGroupId, tx, ty);
+		//	push(tx);
+		//} else {
+			push(0);
+		//}
+		break;
+	case 31:
+		spriteGroupId = pop();
+		//if (spriteGroupId) {
+		//	_sprite->getGroupPosition(spriteGroupId, tx, ty);
+		//	push(ty);
+		//} else {
+			push(0);
+		//}
+		break;
+	case 42: // HE 99+
+		type = pop();
+		spriteGroupId = pop();
+		/*if (spriteGroupId) {
+			switch (type) {
+			case 0:
+				push(_sprite->getGroupXMul(spriteGroupId));
+				break;
+			case 1:
+				push(_sprite->getGroupXDiv(spriteGroupId));
+				break;
+			case 2:
+				push(_sprite->getGroupYMul(spriteGroupId));
+				break;
+			case 3:
+				push(_sprite->getGroupYDiv(spriteGroupId));
+				break;
+			default:
+				push(0);
+			}
+		} else {*/
+			push(0);
+		//}
+		break;
+	case 43:
+		spriteGroupId = pop();
+		//if (spriteGroupId)
+		//	push(_sprite->getGroupPriority(spriteGroupId));
+		//else
+			push(0);
+		break;
+	case 63: // HE 99+
+		spriteGroupId = pop();
+		//if (spriteGroupId)
+		//	push(_sprite->getGroupDstResNum(spriteGroupId));
+		//else
+			push(0);
+		break;
+	case 139: // HE 99+
+		// dummy case
+		pop();
+		pop();
+		push(0);
+		break;
+	default:
+		printf("Error: o90_getSpriteGroupInfo: Unknown case %d\n", subOp);
+	}
+}
+
 void _0x28_SetSpriteGroupInfo() 
 {
 	int type, value1, value2, value3, value4;

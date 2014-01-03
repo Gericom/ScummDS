@@ -136,10 +136,13 @@ void writePaletteColor(void* Palette, byte *dst, byte color)
 	*((uint16_t*)dst) = c16;
 }
 
+static uint8_t linebuffer[1024];
+
 void decompressWizImage(uint8 *dst, int dstPitch, uint32_t DataOffset, int X, int Y, int Width, int Height, void *palPtr) {
 	//const *dataPtrNext;
 	uint8 code, *dstPtr, *dstPtrNext;
 	int h, w, xoff, dstInc;
+	uint8_t* line;
 
 	fseek(HE1_File, DataOffset, SEEK_SET);
 
@@ -150,7 +153,7 @@ void decompressWizImage(uint8 *dst, int dstPitch, uint32_t DataOffset, int X, in
 	//	assert(palPtr != 0);
 	//}
 
-	dstPtr = dst;
+	dstPtr = dst + Y * dstPitch + X * 2;
 	//dataPtr = src;
 
 	// Skip over the first 'srcRect->top' lines in the data
@@ -174,16 +177,16 @@ void decompressWizImage(uint8 *dst, int dstPitch, uint32_t DataOffset, int X, in
 	//}
 
 	while (h--) {
-		xoff = X;//srcRect.left;
+		xoff = 0;//srcRect.left;
 		w = Width;
-		uint16 lineSize;// = READ_LE_UINT16(dataPtr); dataPtr += 2;
+		uint16 lineSize;
 		readU16LE(HE1_File, &lineSize);
+		readBytes(HE1_File, &linebuffer[0], lineSize);
+		line = &linebuffer[0];
 		dstPtrNext = dstPtr + dstPitch;
-		//dataPtrNext = dataPtr + lineSize;
 		if (lineSize != 0) {
 			while (w > 0) {
-				readByte(HE1_File, &code);
-				//code = *dataPtr++;
+				code = *line++;
 				if (code & 1) {
 					code >>= 1;
 					if (xoff > 0) {
@@ -199,58 +202,47 @@ void decompressWizImage(uint8 *dst, int dstPitch, uint32_t DataOffset, int X, in
 					code = (code >> 2) + 1;
 					if (xoff > 0) {
 						xoff -= code;
-						fseek(HE1_File, 1, SEEK_CUR);
-						//++dataPtr;
+						++line;
 						if (xoff >= 0)
 							continue;
 
 						code = -xoff;
-						fseek(HE1_File, -1, SEEK_CUR);
-						//--dataPtr;
+						--line;
 					}
 					w -= code;
 					if (w < 0) {
 						code += w;
 					}
-					uint8_t color;
-					readByte(HE1_File, &color);
+					uint8_t color = *line++;
 					while (code--) {
 						writePaletteColor(palPtr, dstPtr, color);
 						//write8BitColor<type>(dstPtr, dataPtr, dstType, palPtr, xmapPtr, bitDepth);
 						dstPtr += dstInc;
 					}
-					//fseek(HE1_File, 1, SEEK_CUR);
-					//dataPtr++;
 				} else {
 					code = (code >> 2) + 1;
 					if (xoff > 0) {
 						xoff -= code;
-						fseek(HE1_File, code, SEEK_CUR);
-						//dataPtr += code;
+						line += code;
 						if (xoff >= 0)
 							continue;
 
 						code = -xoff;
-						fseek(HE1_File, xoff, SEEK_CUR);
-						//dataPtr += xoff;
+						line += xoff;
 					}
 					w -= code;
 					if (w < 0) {
 						code += w;
 					}
 					while (code--) {
-						uint8_t color;
-						readByte(HE1_File, &color);
+						uint8_t color = *line++;
 						writePaletteColor(palPtr, dstPtr, color);
 						//write8BitColor<type>(dstPtr, dataPtr, dstType, palPtr, xmapPtr, bitDepth);
-						//fseek(HE1_File, 1, SEEK_CUR);
-						//dataPtr++;
 						dstPtr += dstInc;
 					}
 				}
 			}
 		}
-		//dataPtr = dataPtrNext;
 		dstPtr = dstPtrNext;
 	}
 }
@@ -279,4 +271,57 @@ void ConvertWIZCursor(uint32_t DataOffset, uint8_t* Dst, void* Palette, uint32_t
 		default:
 			break;
 	}
+}
+
+void DecompressAKOSCodec1(uint32_t DataOffset, uint8_t* Dst, void* Palette, uint32_t PaletteLength, void* Colors, uint32_t Width, uint32_t Height)
+		{
+			int ColorShift;
+			byte RepeatMask;
+			if (PaletteLength == 32) ColorShift = 3;
+			else if (PaletteLength == 64) ColorShift = 2;
+			else ColorShift = 4;
+			RepeatMask = (byte)~((0xFF >> ColorShift) << ColorShift);
+
+			fseek(HE1_File, DataOffset, SEEK_SET);
+
+			int x = 0;
+			int y = 0;
+			while (true)
+			{
+				uint8_t d;
+				readByte(HE1_File, &d);
+				int repeat = (int)(/*Data[Offset]*/d & RepeatMask);
+				int color = (int)(/*Data[Offset++]*/d >> ColorShift);
+				if (repeat == 0)
+				{
+					//repeat = Data[Offset++];
+					readByte(HE1_File, &d);
+					repeat = d;
+				}
+				for (int j = 0; j < repeat; j++)
+				{
+					if (color != 0) writePaletteColor(Colors, Dst + (y * Width * 2 + x * 2), ((uint8_t*)Palette)[color]);
+					y++;
+					if (y == Height)
+					{
+						y = 0;
+						x++;
+						if (x == Width)
+						{
+							return;
+						}
+					}
+				}
+			}
+		}
+
+void ConvertAKOSFrame(uint32_t DataOffset, uint8_t* Dst, void* Palette, uint32_t PaletteLength, void* Colors, uint32_t Width, uint32_t Height, uint32_t Codec)
+{
+	switch (Codec)
+	{
+		case 1: DecompressAKOSCodec1(DataOffset, Dst, Palette, PaletteLength, Colors, Width, Height); break;
+		//case 16: return DecompressAKOSCodec16(Data, Offset, Palette, Colors, Width, Height);
+		case 32: decompressWizImage(Dst, Width * 2, DataOffset, 0, 0, Width, Height, Colors); break;
+	}
+	//return null;
 }

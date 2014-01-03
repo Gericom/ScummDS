@@ -15,6 +15,8 @@ extern bool FrameBufferFree[1];
 void InitFrameBuffers();
 int GetFreeFrameBuffer();
 
+uint16_t Merge4Pixels(uint16_t a, uint16_t b, uint16_t c, uint16_t d);
+
 void RenderFrame(int textureID);
 void DoRender(int textureID);
 

@@ -368,6 +368,7 @@ void executeOpcode(byte i)
 	case 0x22: _0x22_ATan2(); break;
 	case 0x25: _0x25_GetSpriteInfo(); break;
 	case 0x26: _0x26_SetSpriteInfo(); break;
+	case 0x27: _0x27_GetSpriteGroupInfo(); break;
 	case 0x28: _0x28_SetSpriteGroupInfo(); break;
 	case 0x34: _0x34_FindAllObjectsWithClassOf(); break;
 	case 0x37: _0x37_Dim2Dim2Array(); break;
@@ -458,6 +459,7 @@ void executeOpcode(byte i)
 	case 0xE1: _0xE1_GetPixel(); break;
 	case 0xE2: _0xE2_LocalizeArrayToScript(); break;
 	case 0xE3: _0xE3_PickVarRandom(); break;
+	case 0xE4: _0xE4_SetBoxSet(); break;
 	case 0xEE: _0xEE_GetStringLength(); break;
 	case 0xF2: _0xF2_IsResourceLoaded(); break;
 	case 0xF3: _0xF3_ReadINI(); break;

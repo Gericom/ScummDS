@@ -323,6 +323,15 @@ int readArray(int array, int idx2, int idx1) {
 
 	ArrayHeader *ah = _arrays[readVar(array) & ~0x33539000];//(ArrayHeader *)getResourceAddress(rtString, readVar(array));
 
+	/*printf("ah->type = %d\n", ah->type);
+	printf("ah->dim1start = %d\n", ah->dim1start);
+	printf("ah->dim1end = %d\n", ah->dim1end);
+	printf("ah->dim2start = %d\n", ah->dim2start);
+	printf("ah->dim2end = %d\n", ah->dim2end);
+
+	while(scanKeys(), keysHeld() == 0);
+	swiDelay(5000000);*/
+
 	if (ah == NULL)
 	{
 		printf("Error: readArray: invalid array %d (%d)\n", array, readVar(array));
@@ -1307,4 +1316,43 @@ void _0xD7_BOr()
 {
 	int a = pop();
 	push(pop() | a); 
+}
+
+void _0xE4_SetBoxSet()
+{
+	int arg = pop() - 1;
+
+	/*const byte *room = getResourceAddress(rtRoom, _roomResource);
+	const byte *boxd = NULL, *boxm = NULL;
+	int32 dboxSize, mboxSize;
+	int i;
+
+	ResourceIterator boxds(room, false);
+	for (i = 0; i < arg; i++)
+		boxd = boxds.findNext(MKTAG('B','O','X','D'));
+
+	if (!boxd)
+		error("ScummEngine_v6::o6_setBoxSet: Can't find dboxes for set %d", arg);
+
+	dboxSize = READ_BE_UINT32(boxd + 4) - 8;
+	byte *matrix = _res->createResource(rtMatrix, 2, dboxSize);
+
+	assert(matrix);
+	memcpy(matrix, boxd + 8, dboxSize);
+
+	ResourceIterator boxms(room, false);
+	for (i = 0; i < arg; i++)
+		boxm = boxms.findNext(MKTAG('B','O','X','M'));
+
+	if (!boxm)
+		error("ScummEngine_v6::o6_setBoxSet: Can't find mboxes for set %d", arg);
+
+	mboxSize = READ_BE_UINT32(boxm + 4) - 8;
+	matrix = _res->createResource(rtMatrix, 1, mboxSize);
+
+	assert(matrix);
+	memcpy(matrix, boxm + 8, mboxSize);
+
+	if (_game.version == 7)
+		putActors();*/
 }

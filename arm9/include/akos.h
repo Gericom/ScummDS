@@ -16,7 +16,9 @@ struct AKHD_t
 struct AKOS_t
 {
 	AKHD_t AKHD;
-	//void* RGBS;
+	uint32_t AKPLLength;
+	void* AKPL;
+	void* RGBS;
 	uint32_t AKSQLength;
 	//fpos_t AKSQOffset;
 	void* AKSQ;

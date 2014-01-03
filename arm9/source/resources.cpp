@@ -37,7 +37,7 @@ void* getGlobalScriptPtr(int id)
 
 void* getLocalScriptPtr(int id)
 {
-	/*int q = 0;
+	int q = 0;
 	while(RoomResource->RMDA->LocalScriptIds[q] != id && q < RoomResource->RMDA->NrLocalScripts) q++;
 	if(RoomResource->RMDA->LocalScriptIds[q] == id)
 	{
@@ -45,11 +45,11 @@ void* getLocalScriptPtr(int id)
 		void* data = malloc(RoomResource->RMDA->LocalScriptLengths[q]);
 		readBytes(HE1_File, (uint8_t*)data, RoomResource->RMDA->LocalScriptLengths[q]);
 		return data;
-	}*/
+	}
 
-	for(int i = 0; i < RoomResource->RMDA->NrLocalScripts; i++)
+	/*for(int i = 0; i < RoomResource->RMDA->NrLocalScripts; i++)
 	{
-		printf("%d\n", RoomResource->RMDA->LocalScriptIds[i]);
+		//printf("%d\n", RoomResource->RMDA->LocalScriptIds[i]);
 		if(RoomResource->RMDA->LocalScriptIds[i] == id)
 		{
 			fseek(HE1_File, RoomResource->RMDA->LocalScriptOffsets[i], SEEK_SET);
@@ -57,7 +57,7 @@ void* getLocalScriptPtr(int id)
 			readBytes(HE1_File, (uint8_t*)data, RoomResource->RMDA->LocalScriptLengths[i]);
 			return data;
 		}
-	}
+	}*/
 	printf("Error: Local Script (%d) not in Room!\n", id);
 	while(1);
 	return NULL;
