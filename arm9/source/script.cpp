@@ -374,7 +374,7 @@ void executeOpcode(byte i)
 	case 0x39: _0x39_GetLinesIntersectionPoint(); break;
 	case 0x3A: _0x3A_SortArray(); break;
 	case 0x43: _0x43_WriteWordVar(); break;
-	case 0x46: _0x46_ByteArrayWrite(); break;
+	//case 0x46: _0x46_ByteArrayWrite(); break;
 	case 0x47: _0x47_WordArrayWrite(); break;
 	case 0x4B: _0x4B_WordArrayIndexedWrite(); break;
 	case 0x4F: _0x4F_WordVarInc(); break;

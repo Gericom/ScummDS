@@ -57,7 +57,7 @@ void _0x37_Dim2Dim2Array();
 void _0x39_GetLinesIntersectionPoint();
 void _0x3A_SortArray();
 void _0x43_WriteWordVar();
-void _0x46_ByteArrayWrite();
+//void _0x46_ByteArrayWrite();
 void _0x47_WordArrayWrite();
 void _0x4B_WordArrayIndexedWrite();
 void _0x4F_WordVarInc();
