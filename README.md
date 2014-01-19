@@ -21,4 +21,4 @@ The games listed here do NOT run fully correctly (since the interpreter is just 
 * <b>Pajama Sam's Sock Works</b> (Dutch, Pajama Sam Sokkensoep)
 
 <h3>Usage</h3>
-Use HEPacker to pack your game and change the path in arm9/source/main.cpp. After that, just compile and run on your ds.
+Use <a href="https://github.com/Gericom/HEPacker">HEPacker</a> to pack your game and change the path in arm9/source/main.cpp. After that, just compile and run on your ds.
