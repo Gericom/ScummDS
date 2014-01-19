@@ -19,3 +19,6 @@ The games listed here do NOT run fully correctly (since the interpreter is just 
 * <b>Pajama Sam 2</b> (Dutch) - Skip the intro cut-scene for better results
 * <b>Pajama Sam 2 Demo</b> (Dutch)
 * <b>Pajama Sam's Sock Works</b> (Dutch, Pajama Sam Sokkensoep)
+
+<h3>Usage</h3>
+Use HEPacker to pack your game and change the path in arm9/source/main.cpp. After that, just compile and run on your ds.
