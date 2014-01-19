@@ -180,7 +180,7 @@ extern int32 _scummVars[1024];
 
 extern uint32_t _numArray;
 
-extern ArrayHeader* _arrays[512];
+extern ArrayHeader* _arrays[8192];
 
 //extern uint8_t scriptdata[16384];
 
@@ -190,8 +190,11 @@ extern ArrayHeader* _arrays[512];
 #define VAR(x)	_scummVars[x]
 
 void runScript(int script, bool freezeResistant, bool recursive, int *lvarptr, int cycle = 0);
+void runObjectScript(int object, int entry, bool freezeResistant, bool recursive, int *vars, int slot = -1, int cycle = 0);
 void initializeLocals(int slot, int *vars);
+int getVerbEntrypoint(int obj, int entry);
 void stopScript(int script);
+void stopObjectScript(int script);
 int getScriptSlot();
 void runScriptNested(int script);
 void updateScriptPtr();
@@ -199,7 +202,7 @@ void getScriptBaseAddress();
 void resetScriptPointer();
 void refreshScriptPointer();
 void executeScript();
-void executeOpcode(byte i);
+inline void executeOpcode(byte i);
 byte fetchScriptByte();
 uint16 fetchScriptWord();
 int16 fetchScriptWordSigned();
@@ -215,6 +218,7 @@ void runExitScript();
 void runEntryScript();
 void killScriptsAndResources();
 void checkAndRunSentenceScript();
+void runInputScript(int clickArea, int val, int mode);
 void decreaseScriptDelay(int amount);
 bool isScriptInUse(int script);
 bool isScriptRunning(int script);

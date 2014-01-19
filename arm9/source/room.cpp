@@ -11,10 +11,10 @@
 #include <HE1.h>
 #include <script.h>
 #include <scumm.h>
+#include <actor.h>
 #include <room.h>
 #include <graphics.h>
 #include <render.h>
-#include <actor.h>
 #include <resources.h>
 
 LFLF_t Room;
@@ -26,13 +26,13 @@ uint32_t _roomResource;
  * Start a 'scene' by loading the specified room with the given main actor.
  * The actor is placed next to the object indicated by objectNr.
  */
-void startScene(int room, void *a, int objectNr)//void startScene(int room, Actor *a, int objectNr)
+void startScene(int room, Actor* a, int objectNr)
 {
 	int i, where;
 
 	printf("Loading room %d\n", room);
 
-	//stopTalk();
+	stopTalk();
 
 	//fadeOut(_switchRoomEffect2);
 	//_newEffect = _switchRoomEffect;

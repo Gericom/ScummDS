@@ -21,6 +21,8 @@ extern uint _lastSound;
 		int16 sound;
 		uint32_t length;
 		void* data;
+		//uint32_t dataoffset;
+		//bool streaming;
 		int starttime;
 		int endtime;
 	} ;
@@ -29,9 +31,11 @@ extern PlayingSound* CurrentPlayingSounds[16];
 
 void addSoundToQueue(int sound, int heOffset, int heChannel, int heFlags);
 void addSoundToQueue2(int sound, int heOffset, int heChannel, int heFlags);
+void ReadStream();
 void doSound();
 void stopSound(int id);
 int isSoundRunning(int id);
+int getSoundResourceSize(int snd);
 
 
 #endif

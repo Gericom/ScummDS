@@ -122,12 +122,12 @@ void decodeScriptString(byte *dst, bool scriptString) {
 				dst += sprintf((char *)dst, "%d", args[val++]);
 				break;
 			case 's':
-				val++;
-				//src = (byte*)_arrays[args[val++]]->data[0];//getStringAddress(args[val++]);
-				//if (src) {
-				//while (*src != 0)
-				//*dst++ = *src++;
-				//}
+				//val++;
+				src = _arrays[args[val++] & ~0x33539000]->data;//getStringAddress(args[val++]);
+				if (src) {
+					while (*src != 0)
+					*dst++ = *src++;
+				}
 				break;
 			case 'x':
 				dst += sprintf((char *)dst, "%x", args[val++]);
@@ -230,7 +230,7 @@ void decodeParseString(int m, int n) {
 void printString(int m, const byte *msg) {
 	switch (m) {
 	case 0:
-		printf("actorTalk:\n%s\n", msg);
+		//printf("actorTalk:\n%s\n", msg);
 		actorTalk(msg);
 		break;
 	case 1:
@@ -257,92 +257,105 @@ int findFreeArrayId() {
 			return i;
 	}
 	printf("Error: Out of array pointers, %d max\n", _numArray);
+	while(scanKeys(), keysHeld() == 0);
+	swiDelay(5000000);
 	return -1;
 }
 
 static const int arrayDataSizes[] = { 0, 1, 4, 8, 8, 16, 32 };
 
-byte *defineArray(int array, int type, int dim2start, int dim2end, int dim1start, int dim1end) {
-		int id;
-		int size;
-		ArrayHeader *ah;
+byte *defineArray(int array, int type, int dim2start, int dim2end, int dim1start, int dim1end)
+{
+	int id;
+	int size;
+	//ArrayHeader *ah;
 
-		//assert(dim2start >= 0 && dim2start <= dim2end);
-		//assert(dim1start >= 0 && dim1start <= dim1end);
-		//assert(0 <= type && type <= 6);
+	//assert(dim2start >= 0 && dim2start <= dim2end);
+	//assert(dim1start >= 0 && dim1start <= dim1end);
+	//assert(0 <= type && type <= 6);
 
 
-		if (type == kBitArray || type == kNibbleArray)
-			type = kByteArray;
+	if (type == kBitArray || type == kNibbleArray)
+		type = kByteArray;
 
-		nukeArray(array);
+	nukeArray(array);
 
-		id = findFreeArrayId();
+	id = findFreeArrayId();
 
-		//printf("defineArray (array %d, dim2start %d, dim2end %d dim1start %d dim1end %d\n", id, dim2start, dim2end, dim1start, dim1end);
+	//printf("defineArray (array %d (%d), dim2start %d, dim2end %d dim1start %d dim1end %d\n", array, id, dim2start, dim2end, dim1start, dim1end);
+	//while(scanKeys(), keysHeld() == 0);
+	//swiDelay(5000000);
 
-		if (array & 0x80000000) {
-			printf("Error: Can't define bit variable as array pointer\n");
-		}
+	if (array & 0x80000000) {
+		printf("Error: Can't define bit variable as array pointer\n");
+	}
 
-		size = arrayDataSizes[type];
+	size = arrayDataSizes[type];
 
-		//if (_game.heversion >= 80)
-		id |= 0x33539000;
+	//if (_game.heversion >= 80)
+	id |= 0x33539000;
 
-		writeVar(array, id);
+	writeVar(array, id);
 
-		//if (_game.heversion >= 80)
-		id &= ~0x33539000;
+	//if (_game.heversion >= 80)
+	id &= ~0x33539000;
 
-		size *= dim2end - dim2start + 1;
-		size *= dim1end - dim1start + 1;
-		size >>= 3;
+	size *= dim2end - dim2start + 1;
+	size *= dim1end - dim1start + 1;
+	size >>= 3;
 
-		_arrays[id] = (ArrayHeader*)malloc(size + sizeof(ArrayHeader));
+	_arrays[id] = (ArrayHeader*)malloc(size + sizeof(ArrayHeader));
+	for(int i = 0; i < size + sizeof(ArrayHeader); i++)
+	{
+		((uint8_t*)_arrays[id])[i] = 0;
+	}
 
-		ah = _arrays[id];//(ArrayHeader *)_res->createResource(rtString, id, size + sizeof(ArrayHeader));
+	//ah = _arrays[id];//(ArrayHeader *)_res->createResource(rtString, id, size + sizeof(ArrayHeader));
 
-		ah->type = type;
-		ah->dim1start = dim1start;
-		ah->dim1end = dim1end;
-		ah->dim2start = dim2start;
-		ah->dim2end = dim2end;
+	_arrays[id]->type = type;
+	_arrays[id]->dim1start = dim1start;
+	_arrays[id]->dim1end = dim1end;
+	_arrays[id]->dim2start = dim2start;
+	_arrays[id]->dim2end = dim2end;
 
-		return ah->data;
+	return &_arrays[id]->data[0];
 }
 
 int readArray(int array, int idx2, int idx1) {
-	//printf("readArray (array %d, idx2 %d, idx1 %d)\n", readVar(array), idx2, idx1);
+	//printf("readArray (array %d (%d), idx2 %d, idx1 %d)\n", array, readVar(array) & ~0x33539000, idx2, idx1);
 
 	if (readVar(array) == 0)
 	{
 		printf("Error: readArray: Reference to zeroed array pointer\n");
+		//while(scanKeys(), keysHeld() == 0);
+		//	swiDelay(5000000);
 		return 0;
 	}
 
 	ArrayHeader *ah = _arrays[readVar(array) & ~0x33539000];//(ArrayHeader *)getResourceAddress(rtString, readVar(array));
 
-	/*printf("ah->type = %d\n", ah->type);
-	printf("ah->dim1start = %d\n", ah->dim1start);
-	printf("ah->dim1end = %d\n", ah->dim1end);
-	printf("ah->dim2start = %d\n", ah->dim2start);
-	printf("ah->dim2end = %d\n", ah->dim2end);
+	//printf("ah->type = %d\n", ah->type);
+	//printf("ah->dim1start = %d\n", ah->dim1start);
+	//printf("ah->dim1end = %d\n", ah->dim1end);
+	//printf("ah->dim2start = %d\n", ah->dim2start);
+	//printf("ah->dim2end = %d\n", ah->dim2end);
 
-	while(scanKeys(), keysHeld() == 0);
-	swiDelay(5000000);*/
+	//while(scanKeys(), keysHeld() == 0);
+	//swiDelay(5000000);
 
 	if (ah == NULL)
 	{
-		printf("Error: readArray: invalid array %d (%d)\n", array, readVar(array));
+		printf("Error: readArray: invalid array %d (%d)\n", array, readVar(array) & ~0x33539000);
+		//while(scanKeys(), keysHeld() == 0);
+		//	swiDelay(5000000);
 		return 0;
 	}
 
 	if (idx2 < (int)ah->dim2start || idx2 > (int)ah->dim2end ||
 		idx1 < (int)ah->dim1start || idx1 > (int)ah->dim1end) {
-			printf("Error: readArray: array %d out of bounds: [%d, %d] exceeds [%d..%d, %d..%d]\n",
-				array, idx1, idx2, ah->dim1start, ah->dim1end,
-				ah->dim2start, ah->dim2end);
+			printf("Error: readArray: array %d out of bounds: [%d, %d] exceeds [%d..%d, %d..%d]\n", array, idx1, idx2, ah->dim1start, ah->dim1end, ah->dim2start, ah->dim2end);
+			//while(scanKeys(), keysHeld() == 0);
+			//swiDelay(5000000);
 			return 0;
 	}
 
@@ -367,11 +380,13 @@ int readArray(int array, int idx2, int idx1) {
 }
 
 void writeArray(int array, int idx2, int idx1, int value) {
-	//printf("writeArray (array %d, idx2 %d, idx1 %d, value %d)\n", readVar(array), idx2, idx1, value);
+	//printf("writeArray (array %d, idx2 %d, idx1 %d, value %d)\n", readVar(array) & ~0x33539000, idx2, idx1, value);
 
 	if (readVar(array) == 0)
 	{
 		printf("Error: writeArray: Reference to zeroed array pointer\n");
+		//while(scanKeys(), keysHeld() == 0);
+		//	swiDelay(5000000);
 		return;
 	}
 
@@ -380,6 +395,8 @@ void writeArray(int array, int idx2, int idx1, int value) {
 	if (ah == NULL)
 	{
 		printf("Error: writeArray: Invalid array (%d) reference\n", readVar(array));
+		//while(scanKeys(), keysHeld() == 0);
+		//	swiDelay(5000000);
 		return;
 	}
 
@@ -388,6 +405,8 @@ void writeArray(int array, int idx2, int idx1, int value) {
 			printf("Error: writeArray: array %d out of bounds: [%d, %d] exceeds [%d..%d, %d..%d]\n",
 				array, idx1, idx2, ah->dim1start, ah->dim1end,
 				ah->dim2start, ah->dim2end);
+			//while(scanKeys(), keysHeld() == 0);
+			//swiDelay(5000000);
 			return;
 	}
 
@@ -648,11 +667,11 @@ static int compareDwordArrayReverse(const void *a, const void *b) {
 
 
 /**
- * Sort a row range in a two-dimensional array by the value in a given column.
- *
- * We sort the data in the row range [dim2start..dim2end], according to the value
- * in column dim1start == dim1end.
- */
+* Sort a row range in a two-dimensional array by the value in a given column.
+*
+* We sort the data in the row range [dim2start..dim2end], according to the value
+* in column dim1start == dim1end.
+*/
 void sortArray(int array, int dim2start, int dim2end, int dim1start, int dim1end, int sortOrder) {
 	//debug(9, "sortArray(%d, [%d,%d,%d,%d], %d)", array, dim2start, dim2end, dim1start, dim1end, sortOrder);
 
@@ -704,6 +723,103 @@ void sortArray(int array, int dim2start, int dim2end, int dim1start, int dim1end
 	}
 }
 
+int findObject(int x, int y, int num, int *args)
+{
+	//printf("findObject(x %d, y %d, num %d, ...)\n", x, y, num);
+	int b, cls, i, result;
+
+	for (i = /*1*/0; i < /*_numLocalObjects*/RoomResource->RMDA->RMHD.NrObjects; i++) {
+		result = 0;
+		if ((RoomResource->RMDA->OBCD[i]->ObjectId < 1) || getClass(RoomResource->RMDA->OBCD[i]->ObjectId, kObjectClassUntouchable))
+			continue;
+
+		// Check polygon bounds
+		if (polygonDefined(RoomResource->RMDA->OBCD[i]->ObjectId)) {
+			if (polygonHit(RoomResource->RMDA->OBCD[i]->ObjectId, x, y))
+				result = RoomResource->RMDA->OBCD[i]->ObjectId;
+			else if (VAR(VAR_POLYGONS_ONLY))
+				continue;
+		}
+
+		if (!result) {
+			// Check object bounds
+			if (RoomResource->RMDA->OBCD[i]->X <= x && RoomResource->RMDA->OBCD[i]->Width + RoomResource->RMDA->OBCD[i]->X > x &&
+			    RoomResource->RMDA->OBCD[i]->Y <= y && RoomResource->RMDA->OBCD[i]->Height + RoomResource->RMDA->OBCD[i]->Y > y)
+					result = RoomResource->RMDA->OBCD[i]->ObjectId;
+		}
+
+		if (result) {
+			if (!num)
+				return result;
+
+			// Check object class
+			cls = args[0];
+			b = getClass(RoomResource->RMDA->OBCD[i]->ObjectId, cls);
+			if ((cls & 0x80 && b) || (!(cls & 0x80) && !b))
+				return result;
+		}
+	}
+
+	return 0;
+}
+
+int convertFilePath(byte *dst, int dstSize)
+{
+	printf("convertFilePath: original filePath is %s\n", dst);
+
+	int len = resStrLen(dst);
+
+	// Switch all \ to / for portablity
+	for (int i = 0; i < len; i++)
+		if (dst[i] == '\\')
+			dst[i] = '/';
+
+	/*if (_game.platform == Common::kPlatformMacintosh) {
+		// Remove : prefix in HE71 games
+		if (dst[0] == ':') {
+			len -= 1;
+			memmove(dst, dst + 1, len);
+			dst[len] = 0;
+		}
+
+		// Switch all : to / for portablity
+		for (int i = 0; i < len; i++) {
+			if (dst[i] == ':')
+				dst[i] = '/';
+		}
+	}*/
+
+	// Strip path
+	int r = 0;
+	if (dst[len - 3] == 's' && dst[len - 2] == 'g') { // Save Game File
+		// Change filename prefix to target name, for save game files.
+		//const char c = dst[len - 1];
+		//snprintf((char *)dst, dstSize, "%s.sg%c", _targetName.c_str(), c);
+	} else if (dst[0] == '.' && dst[1] == '/') { // Game Data Path
+		// The default game data path is set to './' by ScummVM
+		r = 2;
+	} else if (dst[0] == '*' && dst[1] == '/') { // Save Game Path (Windows HE72 - HE100)
+		// The default save game path is set to '*/' by ScummVM
+		r = 2;
+	} else if (dst[0] == '*' && dst[1] == ':') { // Save Game Path (Macintosh HE72 - HE100)
+		// The default save game path is set to ':/' by ScummVM
+		r = 2;
+	} else if (dst[0] == 'c' && dst[1] == ':') { // Save Game Path (HE60 - HE71)
+		// The default save path is game path (DOS) or 'c:/hegames/' (Windows)
+		for (r = len; r != 0; r--) {
+			if (dst[r - 1] == '/')
+				break;
+		}
+	} else if (dst[0] == 'u' && dst[1] == 's') { // Save Game Path (Moonbase Commander)
+		// The default save path is 'user/'
+		r = 5;
+	}
+
+	printf("convertFilePath: converted filePath is %s\n", dst + r);
+	return r;
+}
+ 
+
 void _0x00_PushByte() {
 	push(fetchScriptByte());
 }
@@ -716,6 +832,12 @@ void _0x03_PushWordVar()
 {
 	push(readVar(fetchScriptWord()));
 }
+
+void _0x06_ByteArrayRead()
+{
+	int base = pop();
+	push(readArray(fetchScriptByte(), 0, base));
+} 
 
 void _0x07_WordArrayRead()
 {
@@ -815,8 +937,8 @@ void _0x43_WriteWordVar()
 
 /*void _0x46_ByteArrayWrite() 
 {
-	int a = pop();
-	writeArray(fetchScriptByte(), 0, pop(), a); 
+int a = pop();
+writeArray(fetchScriptByte(), 0, pop(), a); 
 }*/
 
 void _0x47_WordArrayWrite()
@@ -890,13 +1012,13 @@ void _0x6D_IfClassOfIs()
 	obj = pop();
 
 	if (num == 0) {
-		push(/*_classData[obj]*/0);
+		push(_classData[obj]);
 		return;
 	}
 
 	while (--num >= 0) {
 		cls = args[num];
-		b = 0;//getClass(obj, cls);
+		b = getClass(obj, cls);
 		if ((cls & 0x80 && !b) || (!(cls & 0x80) && b))
 			cond = 0;
 	}
@@ -911,21 +1033,21 @@ void _0x6E_SetClass()
 	num = getStackList(args, ARRAYSIZE(args));
 	obj = pop();
 
-	/*while (--num >= 0) {
-	cls = args[num];
-	if (cls == 0)
-	_classData[num] = 0;
-	else if (cls & 0x80)
-	putClass(obj, cls, 1);
-	else
-	putClass(obj, cls, 0);
-	} */
+	while (--num >= 0) {
+		cls = args[num];
+		if (cls == 0)
+			_classData[num] = 0;
+		else if (cls & 0x80)
+			putClass(obj, cls, 1);
+		else
+			putClass(obj, cls, 0);
+	}
 }
 
 void _0x6F_GetState()
 {
 	int obj = pop();
-	push(/*getState(obj)*/1); 
+	push(getState(obj)); 
 }
 
 void _0x73_Jump()
@@ -971,9 +1093,9 @@ void _0x7F_PutActorAtXY()
 	if (room == 0xFF || room == 0x7FFFFFFF) {
 		room = a->_room;
 	} else {
-		//if (a->_visible && _currentRoom != room && getTalkingActor() == a->_number) {
-		//stopTalk();
-		//}
+		if (a->_visible && _currentRoom != room && getTalkingActor() == a->_number) {
+			stopTalk();
+		}
 		if (room != 0)
 			a->_room = room;
 	}
@@ -991,7 +1113,7 @@ void _0x82_AnimateActor()
 
 void _0x87_GetRandomNumber()
 {
-	int rnd = rand() % abs(pop());
+	int rnd = rand() % /*abs(*/(pop() + 1)/*)*/;
 	VAR(VAR_RANDOM_NR) = rnd;
 	push(rnd); 
 }
@@ -1000,7 +1122,7 @@ void _0x88_GetRandomNumberRange()
 {
 	int max = pop();
 	int min = pop();
-	int rnd = rand() % (max - min) + min;
+	int rnd = rand() % (max - min + 1) + min;
 	VAR(VAR_RANDOM_NR) = rnd;
 	push(rnd); 
 }
@@ -1072,6 +1194,13 @@ void _0xA1_PseudoRoom()
 	}
 } 
 
+void _0xA3_GetVerbEntrypoint()
+{
+	int e = pop();
+	int v = pop();
+	push(getVerbEntrypoint(v, e));
+}
+
 void _0xA6_DrawBox()
 {
 	int x, y, x2, y2, color;
@@ -1111,9 +1240,9 @@ void _0xA9_Wait()
 		//printf("VAR(VAR_HAVE_MSG) = %X\n", VAR(VAR_HAVE_MSG));
 		if (VAR(VAR_HAVE_MSG))
 		{
-			if(_haveMsg >= 64) _haveMsg-=64;
-			else _haveMsg = 0;
-			
+			//if(_haveMsg >= 64) _haveMsg-=64;
+			//else _haveMsg = 0;
+
 			break;
 		}
 		return;
@@ -1255,6 +1384,12 @@ void _0xBF_StartScriptQuick2()
 	runScript(script, 0, 1, args); 
 }
 
+void _0xC4_Abs()
+{
+	int a = pop();
+	push((a >= 0) ? a : -a);
+}
+
 void _0xCA_DelayFrames()
 {
 	ScriptSlot *ss = &vm.slot[_currentScript];
@@ -1281,6 +1416,31 @@ void _0xCB_PickOneOf()
 	push(args[i]); 
 }
 
+void _0xCD_StampObject()
+{
+	int object, x, y, state;
+
+	state = pop();
+	y = pop();
+	x = pop();
+	object = pop();
+
+	if (state == 0)
+		state = 1;
+
+	int objnum = getObjectIndex(object);
+	if (objnum == -1)
+		return;
+
+	if (x != -1) {
+		//_objs[objnum].x_pos = x * 8;
+		//_objs[objnum].y_pos = y * 8;
+	}
+
+	putState(object, state);
+	//drawObject(objnum, 0);
+}
+
 void _0xD0_GetDateTime()
 {
 	time_t ut = time(NULL);
@@ -1294,7 +1454,7 @@ void _0xD0_GetDateTime()
 
 void _0xD1_StopTalking()
 {
-	//stopTalk();
+	stopTalk();
 }
 
 void _0xD2_GetAnimateVariable()
@@ -1302,8 +1462,13 @@ void _0xD2_GetAnimateVariable()
 	int var = pop();
 	Actor *a = &_actors[pop()];//derefActor(pop(), "o6_getAnimateVariable");
 	push(getAnimVar(a, var));
-	//if(getAnimVar(a, var) == 0) setAnimVar(a, var, 1);
-	//else setAnimVar(a, var, 0);
+}
+
+void _0xD4_Shuffle()
+{
+	int b = pop();
+	int a = pop();
+	shuffleArray(fetchScriptWord(), a, b);
 }
 
 void _0xD6_BAnd()
@@ -1329,10 +1494,10 @@ void _0xE4_SetBoxSet()
 
 	ResourceIterator boxds(room, false);
 	for (i = 0; i < arg; i++)
-		boxd = boxds.findNext(MKTAG('B','O','X','D'));
+	boxd = boxds.findNext(MKTAG('B','O','X','D'));
 
 	if (!boxd)
-		error("ScummEngine_v6::o6_setBoxSet: Can't find dboxes for set %d", arg);
+	error("ScummEngine_v6::o6_setBoxSet: Can't find dboxes for set %d", arg);
 
 	dboxSize = READ_BE_UINT32(boxd + 4) - 8;
 	byte *matrix = _res->createResource(rtMatrix, 2, dboxSize);
@@ -1342,10 +1507,10 @@ void _0xE4_SetBoxSet()
 
 	ResourceIterator boxms(room, false);
 	for (i = 0; i < arg; i++)
-		boxm = boxms.findNext(MKTAG('B','O','X','M'));
+	boxm = boxms.findNext(MKTAG('B','O','X','M'));
 
 	if (!boxm)
-		error("ScummEngine_v6::o6_setBoxSet: Can't find mboxes for set %d", arg);
+	error("ScummEngine_v6::o6_setBoxSet: Can't find mboxes for set %d", arg);
 
 	mboxSize = READ_BE_UINT32(boxm + 4) - 8;
 	matrix = _res->createResource(rtMatrix, 1, mboxSize);
@@ -1354,5 +1519,5 @@ void _0xE4_SetBoxSet()
 	memcpy(matrix, boxm + 8, mboxSize);
 
 	if (_game.version == 7)
-		putActors();*/
+	putActors();*/
 }

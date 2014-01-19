@@ -1134,6 +1134,103 @@ void _0x28_SetSpriteGroupInfo()
 	}
 } 
 
+void _0x29_GetWizData()
+{
+	byte filename[4096];
+	int resId, state, type;
+	int32 w, h;
+	int32 x, y;
+
+	byte subOp = fetchScriptByte();
+
+	switch (subOp) {
+	case 30:
+		state = pop();
+		resId = pop();
+		//_wiz->getWizImageSpot(resId, state, x, y);
+		push(0);//x);
+		break;
+	case 31:
+		state = pop();
+		resId = pop();
+		//_wiz->getWizImageSpot(resId, state, x, y);
+		push(0);//y);
+		break;
+	case 32:
+		state = pop();
+		resId = pop();
+		//_wiz->getWizImageDim(resId, state, w, h);
+		push(0);//w);
+		break;
+	case 33:
+		state = pop();
+		resId = pop();
+		//_wiz->getWizImageDim(resId, state, w, h);
+		push(0);//h);
+		break;
+	case 36:
+		resId = pop();
+		push(0);//_wiz->getWizImageStates(resId));
+		break;
+	case 45:
+		y = pop();
+		x = pop();
+		state = pop();
+		resId = pop();
+		push(0);//_wiz->isWizPixelNonTransparent(resId, state, x, y, 0));
+		break;
+	case 66:
+		y = pop();
+		x = pop();
+		state = pop();
+		resId = pop();
+		push(0);//_wiz->getWizPixelColor(resId, state, x, y));
+		break;
+	case 130:
+		h = pop();
+		w = pop();
+		y = pop();
+		x = pop();
+		state = pop();
+		resId = pop();
+		if (x == -1 && y == -1 && w == -1 && h == -1) {
+			//_wiz->getWizImageDim(resId, state, w, h);
+			x = 0;
+			y = 0;
+		}
+		push(0);//computeWizHistogram(resId, state, x, y, w, h));
+		break;
+	case 139:
+		type = pop();
+		state = pop();
+		resId = pop();
+		push(0);//_wiz->getWizImageData(resId, state, type));
+		break;
+	case 141:
+		pop();
+		copyScriptString(filename, sizeof(filename));
+		pop();
+		push(0);
+		printf("o90_getWizData() case 111 unhandled\n");
+		break;
+	default:
+		printf("Error: o90_getWizData: Unknown case %d\n", subOp);
+	}
+}
+
+void _0x2B_StartScriptUnk()
+{
+	int args[25];
+	int script, cycle;
+	byte flags;
+
+	getStackList(args, ARRAYSIZE(args));
+	cycle = pop();
+	script = pop();
+	flags = fetchScriptByte();
+	runScript(script, (flags == 199 || flags == 200), (flags == 195 || flags == 200), args, cycle);
+}
+
 void _0x34_FindAllObjectsWithClassOf() {
 	int args[16];
 	int cond, num, cls, tmp;
@@ -1148,21 +1245,21 @@ void _0x34_FindAllObjectsWithClassOf() {
 
 	writeVar(0, 0);
 	defineArray(0, kDwordArray, 0, 0, 0, RoomResource->RMDA->RMHD.NrObjects);
-	/*for (int i = 1; i < _numLocalObjects; i++) {
+	for (int i = /*1*/0; i < /*_numLocalObjects*/RoomResource->RMDA->RMHD.NrObjects; i++) {
 		cond = 1;
 		tmp = num;
 		while (--tmp >= 0) {
 			cls = args[tmp];
-			b = getClass(_objs[i].obj_nr, cls);
+			b = getClass(/*_objs[i].obj_nr*/RoomResource->RMDA->OBCD[i]->ObjectId, cls);
 			if ((cls & 0x80 && !b) || (!(cls & 0x80) && b))
 				cond = 0;
 		}
 
 		if (cond) {
 			numObjs++;
-			writeArray(0, 0, numObjs, _objs[i].obj_nr);
+			writeArray(0, 0, numObjs, /*_objs[i].obj_nr*/RoomResource->RMDA->OBCD[i]->ObjectId);
 		}
-	}*/
+	}
 
 	writeArray(0, 0, 0, numObjs);
 

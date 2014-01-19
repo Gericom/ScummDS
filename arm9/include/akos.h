@@ -29,10 +29,11 @@ struct AKOS_t
 	//void* AKCI;
 	fpos_t AKCDOffset;
 	//void* AKCD;
+	//fpos_t AKCTOffset;
 	uint32_t AKSTLength;
-	void* AKST;
-	uint32_t AKSFLength;
-	void* AKSF;
+	//void* AKST;
+	//uint32_t AKSFLength;
+	//void* AKSF;
 };
 
 void freeAKOS(AKOS_t* AKOS);

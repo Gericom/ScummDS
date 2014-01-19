@@ -275,11 +275,11 @@ void _0xEE_GetStringLength()
 
 	id = pop();
 
-	addr = (byte*)_arrays[id]->data;//getStringAddress(id);
+	addr = (byte*)_arrays[id & ~0x33539000]->data;
 	if (!addr)
 		printf("Error: o70_getStringLen: Reference to zeroed array pointer (%d)\n", id);
 
-	len = resStrLen((byte*)_arrays[id]->data);
+	len = resStrLen((byte*)_arrays[id & ~0x33539000]->data);
 	push(len); 
 }
 

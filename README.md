@@ -14,7 +14,8 @@ I have big problems with dynamic memory allocation. It is not that the DS got no
 
 <h3>Supported Games</h3>
 The games listed here do NOT run fully correctly (since the interpreter is just not finished), but atleast they boot past the HE logo and show their first location you can actually move your mouse. I am not sure if language matters, but it is possible that the HE version differs between languages.<br>
-* <b>Freddi Fish and Luther's Maze Madness</b> (Dutch, Freddi Fish en Loebas' Dolle Doolhof) - The intro cutscene doesn't work with sound enabled
-* <b>Freddi Fish 4 Demo</b> (Dutch) - Depends on skipping cutscenes
+* <b>Freddi Fish and Luther's Maze Madness</b> (Dutch, Freddi Fish en Loebas' Dolle Doolhof)
+* <b>Pajama Sam</b> (Dutch)
+* <b>Pajama Sam 2</b> (Dutch) - Skip the intro cut-scene for better results
 * <b>Pajama Sam 2 Demo</b> (Dutch)
-* <b>Spy Fox 2 Demo</b> (Dutch)
+* <b>Pajama Sam's Sock Works</b> (Dutch, Pajama Sam Sokkensoep)

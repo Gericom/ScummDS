@@ -6,7 +6,9 @@ extern LFLF_t* RoomResource;
 extern uint32_t _currentRoom;
 extern uint32_t _roomResource;
 
-void startScene(int room, void *a, int objectNr);
+struct Actor;
+
+void startScene(int room, Actor *a, int objectNr);
 void* getExitScript();
 void* getEntryScript();
 

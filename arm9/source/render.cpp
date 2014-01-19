@@ -5,15 +5,13 @@
 #include <akos.h>
 #include <scumm.h>
 
-uint16_t FrameBuffer[640 * 480];
+uint16_t TempBuffer[640 * 480];
 
-uint16_t FrameBuffers[1][640 * 480];
+uint16_t BackgroundFrameBuffer[320 * 240];
 
-bool FrameBufferFree[1];
+uint16_t WIZFrameBuffer[320 * 240];
 
 uint16_t ResultFrameBuffer[512 * 256];
-
-//uint16_t ActorFrameBuffer[160 * 120];
 
 uint16_t CursorBuffer[32 * 32 * 2];
 
@@ -23,114 +21,89 @@ static bool done = false;
 
 void InitFrameBuffers()
 {
-	for(int i = 0; i < 1; i++)
+	for(int j = 0; j < 640 * 480; j++)
 	{
-		FrameBufferFree[i] = true;
-		for(int j = 0; j < 640 * 480; j++)
-		{
-			FrameBuffers[i][j] = 0x8000;
-		}
+		WIZFrameBuffer[j] = 0x8000;
 	}
 }
 
-int GetFreeFrameBuffer()
-{
-	for(int i = 0; i < 1; i++)
-	{
-		if(FrameBufferFree[i] == true)
-		{
-			FrameBufferFree[i] = false;
-			return i;
-		}
-	}
-	printf("No framebuffers Left!\n");
-	//while(scanKeys(), keysHeld() == 0);
-	//swiDelay(5000000);
-	return 0;
-}
-
-uint16_t Merge4Pixels(uint16_t a, uint16_t b, uint16_t c, uint16_t d)
-{
-	uint16_t R = ((a & 0x1F) + (b & 0x1F) + (c & 0x1F) + (d & 0x1F)) >> 2;
-	uint16_t G = (((a & 0x3E0) + (b & 0x3E0) + (c & 0x3E0) + (d & 0x3E0)) >> 2) & 0x3E0;
-	uint16_t B = (((a & 0x7C00) + (b & 0x7C00) + (c & 0x7C00) + (d & 0x7C00)) >> 2) & 0x7C00;
-
-	return R | G | B;
-}
+static Actor* _sortedActors[62];
 
 //640x480 -> 320x240 -> 512x256
-void RenderFrame(int textureID)
+void RenderFrame()
 {
-	for(int i = 0, i2 = 0; i < 480; i+=2, i2++)
+	for(int i = 0; i < 240; i++)
 	{
-		for(int j = 0, j2 = 0; j < 640; j+=2, j2++)
+		memcpy(&ResultFrameBuffer[i * 512], &BackgroundFrameBuffer[i * 320], 320 * 2);
+	}
+
+	for(int i = 0; i < 240; i++)
+	{
+		for(int j = 0; j < 320; j++)
 		{
-			/*uint16_t a = FrameBuffer[i * 640 + j];
-			uint16_t b = FrameBuffer[i * 640 + j + 1];
-			uint16_t c = FrameBuffer[(i + 1) * 640 + j];
-			uint16_t d = FrameBuffer[(i + 1) * 640 + j + 1];
-
-			uint16_t R = ((a & 0x1F) + (b & 0x1F) + (c & 0x1F) + (d & 0x1F)) >> 2;
-			uint16_t G = (((a & 0x3E0) + (b & 0x3E0) + (c & 0x3E0) + (d & 0x3E0)) >> 2) & 0x3E0;
-			uint16_t B = (((a & 0x7C00) + (b & 0x7C00) + (c & 0x7C00) + (d & 0x7C00)) >> 2) & 0x7C00;*/
-
-			ResultFrameBuffer[i2 * 512 + j2] = Merge4Pixels(FrameBuffer[i * 640 + j], FrameBuffer[i * 640 + j + 1], FrameBuffer[(i + 1) * 640 + j], FrameBuffer[(i + 1) * 640 + j + 1]);//R | G | B;//FrameBuffer[i * 640 + j];
+			if(WIZFrameBuffer[i * 320 + j] != 0x8000)
+				ResultFrameBuffer[i * 512 + j] = WIZFrameBuffer[i * 320 + j];
 		}
 	}
 
-	for(int a = 0; a < 1; a++)
-	{
-		if(!FrameBufferFree[a])
-		{
-			for(int i = 0, i2 = 0; i < 480; i+=2, i2++)
-			{
-				for(int j = 0, j2 = 0; j < 640; j+=2, j2++)
-				{
-					if(FrameBuffers[a][i * 640 + j] != 0x8000)
-						ResultFrameBuffer[i2 * 512 + j2] = Merge4Pixels(FrameBuffers[a][i * 640 + j], FrameBuffers[a][i * 640 + j + 1], FrameBuffers[a][(i + 1) * 640 + j], FrameBuffers[a][(i + 1) * 640 + j + 1]);//R | G | B;//FrameBuffer[i * 640 + j];
+	int numactors = 0;
+
+	// Make a list of all actors in this room
+	for (int i = 0; i < _numActors; i++) {
+		if (isInCurrentRoom(&_actors[i])) {
+			_sortedActors[numactors++] = &_actors[i];
+		}
+	}
+	if (numactors) {
+		//if (_game.heversion >= 90) {
+		for (int j = 0; j < numactors; ++j) {
+			for (int i = 0; i < numactors; ++i) {
+				int sc_actor1 = _sortedActors[j]->_layer;
+				int sc_actor2 = _sortedActors[i]->_layer;
+				if (sc_actor1 < sc_actor2) {
+					SWAP(_sortedActors[i], _sortedActors[j]);
+				} else if (sc_actor1 == sc_actor2) {
+					sc_actor1 = _sortedActors[j]->y;
+					sc_actor2 = _sortedActors[i]->y;
+					if (sc_actor1 < sc_actor2) {
+						SWAP(_sortedActors[i], _sortedActors[j]);
+					}
 				}
 			}
 		}
-	}
-
-	/*for(int i = 0; i < 160 * 120; i++)
-	{
-		ActorFrameBuffer[i] = 0x8000;
-	}*/
-
-	for(int i = 0; i < _numActors; i++)
-	{
-		if(_actors[i]._cost.AKOS != NULL && _actors[i]._visible)
-		{
-			/*for(int j = 0; j < 16; j++)
-			{
-					if(drawLimb(&_actors[i], j)) 
-					{
-						//akos_increaseAnim(&_actors[i], j);
-						break;
-					}
-			}*/
-			renderCostume(&_actors[i]);
-			
-			//printf("None Active!\n");
-
-			//int q = 0;
-			//while(drawLimb(&_actors[i], q) == 0) q++;
+		//} else {
+		/*	for (int j = 0; j < numactors; ++j) {
+		for (int i = 0; i < numactors; ++i) {
+		int sc_actor1 = _sortedActors[j]->getPos().y - _sortedActors[j]->_layer * 2000;
+		int sc_actor2 = _sortedActors[i]->getPos().y - _sortedActors[i]->_layer * 2000;
+		if (sc_actor1 < sc_actor2) {
+		SWAP(_sortedActors[i], _sortedActors[j]);
 		}
-	}
+		}
+		}
+		}*/
 
-	/*for(int i = 0, i2 = 0; i < 160; i++, i2+=2)
-	{
-		for(int j = 0, j2 = 0; j < 120; j++, j2+=2)
-		{
-			if(ActorFrameBuffer[i * 160 + j] != 0x8000)
-			{
-				ResultFrameBuffer[i2 * 512 + j2] = ActorFrameBuffer[i * 160 + j];
-				ResultFrameBuffer[i2 * 512 + j2 + 1] = ActorFrameBuffer[i * 160 + j];
-				ResultFrameBuffer[(i2 + 1) * 512 + j2] = ActorFrameBuffer[i * 160 + j];
-				ResultFrameBuffer[(i2 + 1) * 512 + j2 + 1] = ActorFrameBuffer[i * 160 + j];
+		// Finally draw the now sorted actors
+		Actor** end = _sortedActors + numactors;
+		for (Actor** ac = _sortedActors; ac != end; ++ac) {
+			Actor* a = *ac;
+
+			if (a->_costume && a->_cost.AKOS != NULL) {
+				renderCostume(a);
+				//a->drawActorCostume();
+				//a->animateCostume();
 			}
-		}
+		} 
+
+	}
+
+
+	/*for(int i = 0; i < _numActors; i++)
+	{
+	if(_actors[i]._cost.AKOS != NULL && _actors[i]._visible && isInCurrentRoom(&_actors[i]))
+	{
+	renderCostume(&_actors[i]);
+	}
 	}*/
 
 	if(_cursor_state > 0)
@@ -139,33 +112,11 @@ void RenderFrame(int textureID)
 		{
 			for(int x = 0; x < 32; x+=2)
 			{
-				if(CursorBuffer[y * 32 + x] != 0x0000)
+				if(CursorBuffer[y * 32 + x] != 0x8000)
 					ResultFrameBuffer[(_mouse_y / 2 + y / 2) * 512 + _mouse_x / 2 + x / 2] = Merge4Pixels(CursorBuffer[y * 32 + x], CursorBuffer[y * 32 + x + 1], CursorBuffer[(y + 1) * 32 + x], CursorBuffer[(y + 1) * 32 + x + 1]);
 			}
 		}
 	}
 
-	/*glMatrixMode(GL_MODELVIEW);
-	glPolyFmt(POLY_ALPHA(31) | POLY_CULL_NONE);
-	glLoadIdentity();
-
-	glBindTexture(0, textureID);*/
-
-	//while(VCOUNT != 144);
-
 	glTexImage2D(0, 0, GL_RGB, TEXTURE_SIZE_512, TEXTURE_SIZE_256, 0, TEXGEN_TEXCOORD, (uint8_t*)&ResultFrameBuffer[0]);
-	/*
-
-	glColor3b(255, 255, 255);
-	glBegin(GL_QUAD);
-	glTexCoord2t16(0, 0);
-	glVertex3v16(0, 0, -7 * 4096);
-	glTexCoord2t16(320 * 16, 0);
-	glVertex3v16(256, 0, -7 * 4096);
-	glTexCoord2t16(320 * 16, 240 * 16);
-	glVertex3v16(256, 192, -7 * 4096);
-	glTexCoord2t16(0, 240 * 16);
-	glVertex3v16(0, 192, -7 * 4096);
-	glEnd();
-	glFlush(GL_TRANS_MANUALSORT);*/
 }

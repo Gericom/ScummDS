@@ -11,6 +11,21 @@
 #include <actor.h>
 #include <objects.h>
 #include <sprite.h>
+#include <ioutil.h>
+
+int readFileToArray(int slot, int32 size)
+{
+	writeVar(0, 0);
+	byte *data = defineArray(0, kByteArray, 0, 0, 0, size);
+
+	if (slot != -1) {
+		fseek(HEx_File, _hInFileTable[slot], SEEK_SET);
+		readBytes(HEx_File, data, size + 1);
+		_hInFileTable[slot] += size + 1;
+	}
+
+	return readVar(0);
+}
 
 void _0x02_PushDWord()
 {
@@ -75,6 +90,12 @@ void _0x59_SetTimer()
 	} 
 }
 
+void _0x5A_GetSoundPosition()
+{
+	int snd = pop();
+	push(/*((SoundHE *)_sound)->getSoundPos(snd)*/0);
+}
+
 void _0x5E_StartScript()
 {
 	int args[25];
@@ -86,6 +107,19 @@ void _0x5E_StartScript()
 	flags = fetchScriptByte();
 
 	runScript(script, (flags == 199 || flags == 200), (flags == 195 || flags == 200), args); 
+}
+
+void _0x60_StartObject()
+{
+	int args[25];
+	int script, entryp;
+	byte flags;
+
+	getStackList(args, ARRAYSIZE(args));
+	entryp = pop();
+	script = pop();
+	flags = fetchScriptByte();
+	runObjectScript(script, entryp, (flags == 199 || flags == 200), (flags == 195 || flags == 200), args);
 }
 
 void _0x61_DrawObject()
@@ -126,7 +160,7 @@ void _0x61_DrawObject()
 
 	if (state != -1) {
 		//addObjectToDrawQue(objnum);
-		//putState(object, state);
+		putState(object, state);
 	}
 }
 
@@ -162,12 +196,19 @@ void _0x9C_RoomOps()
 		b = _roomWidth - (_screenWidth / 2);
 		VAR(VAR_CAMERA_MIN_X) = a;
 		VAR(VAR_CAMERA_MAX_X) = b;*/
+
+		printf("SO_ROOM_SCROLL(a = %d, b = %d)\n", a, b);
+		while(scanKeys(), keysHeld() == 0);
+		swiDelay(5000000);
 		break;
 
 	case 174:		// SO_ROOM_SCREEN
 		b = pop();
 		a = pop();
 		//initScreens(a, _screenHeight);
+		printf("initScreens(a = %d, b = %d)\n", a, b);
+		while(scanKeys(), keysHeld() == 0);
+		swiDelay(5000000);
 		break;
 
 	case 175:		// SO_ROOM_PALETTE
@@ -268,16 +309,16 @@ void _0x9D_ActorOps()
 	switch (subOp) {
 	case 21: // HE 80+
 		k = getStackList(args, ARRAYSIZE(args));
-		//for (i = 0; i < k; ++i) {
-		//	a->setUserCondition(args[i] & 0x7F, args[i] & 0x80);
-		//}
+		for (i = 0; i < k; ++i) {
+			setUserCondition(a, args[i] & 0x7F, args[i] & 0x80);
+		}
 		break;
 	case 24: // HE 80+
 		k = pop();
-		//if (k == 0)
-		//	k = _rnd.getRandomNumberRng(1, 10);
+		if (k == 0)
+			k = rand() % 10 + 1;
 		a->_heNoTalkAnimation = 1;
-		//a->setTalkCondition(k);
+		setTalkCondition(a, k);
 		break;
 	case 43: // HE 90+
 		a->_layer = pop();
@@ -312,7 +353,7 @@ void _0x9D_ActorOps()
 		break;
 	case 68: // HE 90+
 		k = pop();
-		//a->setHEFlag(1, k);
+		setHEFlag(a, 1, k);
 		break;
 	case 76:		// SO_COSTUME
 		setActorCostume(a, pop());
@@ -323,15 +364,11 @@ void _0x9D_ActorOps()
 		//a->setActorWalkSpeed(i, j);
 		break;
 	case 78:		// SO_SOUND
-		//printf("SO_SOUND:\n");
 		k = getStackList(args, ARRAYSIZE(args));
 		for (i = 0; i < k; i++)
 		{
 			a->_sound[i] = args[i];
-			//printf("%d\n", args[i]);
 		}
-		//while(scanKeys(), keysHeld() == 0);
-		//swiDelay(5000000);
 		break;
 	case 79:		// SO_WALK_ANIMATION
 		a->_walkFrame = pop();
@@ -436,7 +473,7 @@ void _0x9D_ActorOps()
 		initActor(a, 2);
 		break;
 	case 218:
-		//a->drawActorToBackBuf(a->getPos().x, a->getPos().y);
+		drawActorToBackBuf(a, a->x, a->y);
 		break;
 	case 219:
 		a->_drawToBackBuf = false;
@@ -447,8 +484,6 @@ void _0x9D_ActorOps()
 		{
 			copyScriptString(string, sizeof(string));
 			int slot = pop();
-
-			printf("Actor: %s\n", string);
 
 			int len = resStrLen(string) + 1;
 			memcpy(a->_heTalkQueue[slot].sentence, string, len);
@@ -467,7 +502,7 @@ void _0xA0_FindObject()
 {
 	int y = pop();
 	int x = pop();
-	int r = 0;//findObject(x, y, 0, 0);
+	int r = findObject(x, y, 0, 0);
 	push(r);
 } 
 
@@ -491,7 +526,6 @@ void _0xA4_ArrayOps()
 		data = defineArray(array, kStringArray, 0, 0, 0, len);
 		memcpy(data, string, len);
 		break;
-
 	case 126:
 		len = getStackList(list, ARRAYSIZE(list));
 		dim1end = pop();
@@ -777,6 +811,7 @@ void _0xD5_JumpToScript()
 	runScript(script, (flags == 199 || flags == 200), (flags == 195 || flags == 200), args);
 }
 
+
 void _0xDA_OpenFile()
 {
 	int mode, slot, i;
@@ -786,10 +821,10 @@ void _0xDA_OpenFile()
 	copyScriptString(buffer, sizeof(buffer));
 	printf("Original filename %s\n", buffer);
 
-	//const char *filename = (char *)buffer + convertFilePath(buffer, sizeof(buffer));
-	//debug("Final filename to %s\n", filename);
+	const char *filename = (char *)buffer + convertFilePath(buffer, sizeof(buffer));
+	printf("Final filename to %s\n", filename);
 
-	/*slot = -1;
+	slot = -1;
 	for (i = 1; i < 17; i++) {
 		if (_hInFileTable[i] == 0 && _hOutFileTable[i] == 0) {
 			slot = i;
@@ -800,19 +835,26 @@ void _0xDA_OpenFile()
 	if (slot != -1) {
 		switch (mode) {
 		case 1:   // Read mode
-			if (!_saveFileMan->listSavefiles(filename).empty()) {
-				_hInFileTable[slot] = _saveFileMan->openForLoading(filename);
-			} else {
-				_hInFileTable[slot] = SearchMan.createReadStreamForMember(filename);
+			if(!strcmp(filename + strlen(filename) - 3, "he8"))
+			{
+				_hInFileTable[slot] = HE8_Start;
 			}
+			//_hInFileTable[slot]
+			//if (!_saveFileMan->listSavefiles(filename).empty()) {
+			//	_hInFileTable[slot] = _saveFileMan->openForLoading(filename);
+			//} else {
+			//	_hInFileTable[slot] = SearchMan.createReadStreamForMember(filename);
+			//}
 			break;
 		case 2:   // Write mode
-			if (!strchr(filename, '/')) {
-				_hOutFileTable[slot] = _saveFileMan->openForSaving(filename);
-			}
+			printf("Write mode not supported!\n");
+			//if (!strchr(filename, '/')) {
+			//	_hOutFileTable[slot] = _saveFileMan->openForSaving(filename);
+			//}
 			break;
 		case 6: { // Append mode
-			if (strchr(filename, '/'))
+			printf("Append mode not supported!\n");
+			/*if (strchr(filename, '/'))
 				break;
 
 			// First check if the file already exists
@@ -839,7 +881,7 @@ void _0xDA_OpenFile()
 			if (_hOutFileTable[slot] && initialData) {
 				_hOutFileTable[slot]->write(initialData, initialSize);
 				delete[] initialData;
-			}
+			}*/
 
 			} break;
 		default:
@@ -850,9 +892,79 @@ void _0xDA_OpenFile()
 			slot = -1;
 
 	}
-	printf("o72_openFile: slot %d, mode %d\n", slot, mode);*/
-	push(/*slot*/1); 
+	printf("o72_openFile: slot %d, mode %d\n", slot, mode);
+	push(slot);
+	//while(scanKeys(), keysHeld() == 0);
+	//swiDelay(5000000);
 }
+
+void _0xDB_ReadFile()
+{
+	int slot;
+	int32 size;
+	byte subOp = fetchScriptByte();
+
+	switch (subOp) {
+	case 4:
+		{
+		slot = pop();
+		if(slot == -1)
+		{
+			push(0);
+			return;
+		}
+		fseek(HEx_File, _hInFileTable[slot], SEEK_SET);
+		uint8_t b;
+		readByte(HEx_File, &b);
+		push(b);
+		_hInFileTable[slot]++;
+		}
+		break;
+	case 5:
+		{
+		slot = pop();
+		if(slot == -1)
+		{
+			push(0);
+			return;
+		}
+		fseek(HEx_File, _hInFileTable[slot], SEEK_SET);
+		uint16_t b;
+		readU16LE(HEx_File, &b);
+		push(b);
+		_hInFileTable[slot]+=2;
+		}
+		break;
+	case 6:
+		{
+		slot = pop();
+		if(slot == -1)
+		{
+			push(0);
+			return;
+		}
+		fseek(HEx_File, _hInFileTable[slot], SEEK_SET);
+		uint32_t b;
+		readU32LE(HEx_File, &b);
+		push(b);
+		_hInFileTable[slot]+=4;
+		}
+		break;
+	case 8:
+		fetchScriptByte();
+		size = pop();
+		slot = pop();
+		if(slot == -1)
+		{
+			push(0);
+			return;
+		}
+		push(readFileToArray(slot, size));
+		break;
+	default:
+		printf("Error: o72_readFile: default case %d\n", subOp);
+	}
+} 
 
 void _0xDD_FindAllObjects()
 {
@@ -922,6 +1034,29 @@ void _0xE1_GetPixel()
 		error("o72_getPixel: default case %d", subOp);
 	}
 	push(area);*/
+} 
+
+void _0xEA_RedimArray()
+{
+	int newX, newY;
+	newY = pop();
+	newX = pop();
+
+	byte subOp = fetchScriptByte();
+
+	switch (subOp) {
+	case 4:
+		redimArray(fetchScriptWord(), 0, newX, 0, newY, kByteArray);
+		break;
+	case 5:
+		redimArray(fetchScriptWord(), 0, newX, 0, newY, kIntArray);
+		break;
+	case 6:
+		redimArray(fetchScriptWord(), 0, newX, 0, newY, kDwordArray);
+		break;
+	default:
+		printf("Error: o72_redimArray: default type %d\n", subOp);
+	}
 } 
 
 void _0xF3_ReadINI()
@@ -1023,6 +1158,46 @@ void _0xF4_WriteINI()
 	}
 
 	//ConfMan.flushToDisk(); 
+}
+
+void _0xF8_GetResourceSize()
+{
+	const byte *ptr;
+	int size;
+	//ResType type;
+
+	int resid = pop();
+	//if (_game.heversion == 72) {
+	//	push(getSoundResourceSize(resid));
+	//	return;
+	//}
+
+	byte subOp = fetchScriptByte();
+
+	switch (subOp) {
+	case 13:
+		push(getSoundResourceSize(resid));
+		return;
+	case 14:
+		//type = rtRoomImage;
+		break;
+	case 15:
+		//type = rtImage;
+		break;
+	case 16:
+		//type = rtCostume;
+		break;
+	case 17:
+		//type = rtScript;
+		break;
+	default:
+		printf("Error: o72_getResourceSize: default type %d\n", subOp);
+	}
+
+	//ptr = getResourceAddress(type, resid);
+	//assert(ptr);
+	//size = READ_BE_UINT32(ptr + 4) - 8;
+	push(0);//push(size);
 }
 
 void _0xF9_CreateDirectory()

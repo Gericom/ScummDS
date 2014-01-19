@@ -8,12 +8,12 @@
 	          (((a) & 0xFF00) <<  8) | \
 	          (((a) & 0x00FF) << 24) ))
 
-bool readByte(FILE* handle, uint8_t* dst);
+extern "C" bool readByte(FILE* handle, uint8_t* dst);
 bool readBytes(FILE* handle, uint8_t* dst, int count);
 bool readChar(FILE* handle, char* dst);
 bool readChars(FILE* handle, char* dst, int count);
 bool readU16LE(FILE* handle, uint16_t* dst);
-bool readU24LE(FILE* handle, uint32_t* dst);
+extern "C" bool readU24LE(FILE* handle, uint32_t* dst);
 bool readU32LE(FILE* handle, uint32_t* dst);
 bool readU32sLE(FILE* handle, uint32_t* dst, int count);
 

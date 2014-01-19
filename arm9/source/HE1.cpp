@@ -61,7 +61,7 @@ void readRoom(FILE* handle, LFLF_t* LFLF, uint32_t offset)
 	readU32LE(handle, &size);
 	uint32_t end = offset + SWAP_CONSTANT_32(size);
 	//LFLF_t* LFLF = (LFLF_t*)malloc(sizeof(LFLF_t));
-	while(pos < (end - 4))
+	while(pos < end)
 	{
 		//fgetpos(handle, &pos);
 		//printf("0x%x\n", (uint32_t)pos);
@@ -151,18 +151,21 @@ void readRoom(FILE* handle, LFLF_t* LFLF, uint32_t offset)
 						readU32LE(handle, &size);
 						fgetpos(handle, &LFLF->RMDA->OBCD[objectidx]->OCDHOffset);
 						readU16LE(handle, &LFLF->RMDA->OBCD[objectidx]->ObjectId);
-						/*uint16 x;
+						uint16 x;
 						readU16LE(handle, &x);
 						LFLF->RMDA->OBCD[objectidx]->X = (int16)x;
 						uint16 y;
 						readU16LE(handle, &y);
 						LFLF->RMDA->OBCD[objectidx]->Y = (int16)y;
 						readU16LE(handle, &LFLF->RMDA->OBCD[objectidx]->Width);
-						readU16LE(handle, &LFLF->RMDA->OBCD[objectidx]->Height);*/
-						fseek(handle, SWAP_CONSTANT_32(size) - 8 - /*10*/2, SEEK_CUR);
+						readU16LE(handle, &LFLF->RMDA->OBCD[objectidx]->Height);
+						readByte(handle, &LFLF->RMDA->OBCD[objectidx]->Flags);
+						readByte(handle, &LFLF->RMDA->OBCD[objectidx]->Parent);
+						fseek(handle, SWAP_CONSTANT_32(size) - 8 - 12, SEEK_CUR);
 
 						readU32LE(handle, &sig);
 						readU32LE(handle, &size);
+						LFLF->RMDA->OBCD[objectidx]->VERBLength = SWAP_CONSTANT_32(size) - 8;
 						fgetpos(handle, &LFLF->RMDA->OBCD[objectidx]->VERBOffset);
 						fseek(handle, SWAP_CONSTANT_32(size) - 8, SEEK_CUR);
 

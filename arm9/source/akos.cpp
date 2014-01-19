@@ -116,8 +116,8 @@ void freeAKOS(AKOS_t* AKOS)
 	//free(AKOS->AKOF);
 	//free(AKOS->AKCI);
 	//free(AKOS->AKCD);
-	free(AKOS->AKST);
-	free(AKOS->AKSF);
+	//free(AKOS->AKST);
+	//free(AKOS->AKSF);
 	free(AKOS);
 }
 
@@ -127,13 +127,15 @@ AKOS_t* readAKOS()
 	uint32_t size;
 	fpos_t pos;
 	readU32LE(HE1_File, &sig);
-	printf("Costume: %c%c%c%c\n", ((char*)&sig)[0], ((char*)&sig)[1], ((char*)&sig)[2], ((char*)&sig)[3]);
+	//printf("Costume: %c%c%c%c\n", ((char*)&sig)[0], ((char*)&sig)[1], ((char*)&sig)[2], ((char*)&sig)[3]);
 	readU32LE(HE1_File, &size);
 	fgetpos(HE1_File, &pos);
 	uint32_t end = pos + SWAP_CONSTANT_32(size) - 8;
 	AKOS_t* AKOS = (AKOS_t*)malloc(sizeof(AKOS_t));
 	AKOS->AKPL = NULL;
 	AKOS->RGBS = NULL;
+	//AKOS->AKST = NULL;
+	//AKOS->AKCTOffset = 0;
 	while(pos < (end - 4))
 	{
 		readU32LE(HE1_File, &sig);
@@ -161,8 +163,6 @@ AKOS_t* readAKOS()
 			break;
 		case MKTAG('A', 'K', 'S', 'Q'):
 			AKOS->AKSQLength = SWAP_CONSTANT_32(size) - 8;
-			//fgetpos(HE1_File, &AKOS->AKSQOffset);
-			//fseek(HE1_File, SWAP_CONSTANT_32(size) - 8, SEEK_CUR);
 			AKOS->AKSQ = malloc(SWAP_CONSTANT_32(size) - 8);
 			readBytes(HE1_File, (uint8_t*)AKOS->AKSQ, SWAP_CONSTANT_32(size) - 8);
 			break;
@@ -173,31 +173,29 @@ AKOS_t* readAKOS()
 		case MKTAG('A', 'K', 'O', 'F'):
 			fgetpos(HE1_File, &AKOS->AKOFOffset);
 			fseek(HE1_File, SWAP_CONSTANT_32(size) - 8, SEEK_CUR);
-			//AKOS->AKOF = malloc(SWAP_CONSTANT_32(size) - 8);
-			//readBytes(HE1_File, (uint8_t*)AKOS->AKOF, SWAP_CONSTANT_32(size) - 8);
 			break;
 		case MKTAG('A', 'K', 'C', 'I'):
 			fgetpos(HE1_File, &AKOS->AKCIOffset);
 			fseek(HE1_File, SWAP_CONSTANT_32(size) - 8, SEEK_CUR);
-			//AKOS->AKCI = malloc(SWAP_CONSTANT_32(size) - 8);
-			//readBytes(HE1_File, (uint8_t*)AKOS->AKCI, SWAP_CONSTANT_32(size) - 8);
 			break;
 		case MKTAG('A', 'K', 'C', 'D'):
 			fgetpos(HE1_File, &AKOS->AKCDOffset);
 			fseek(HE1_File, SWAP_CONSTANT_32(size) - 8, SEEK_CUR);
-			//AKOS->AKCD = malloc(SWAP_CONSTANT_32(size) - 8);
-			//readBytes(HE1_File, (uint8_t*)AKOS->AKCD, SWAP_CONSTANT_32(size) - 8);
 			break;
-		case MKTAG('A', 'K', 'S', 'T'):
-			AKOS->AKSTLength = SWAP_CONSTANT_32(size) - 8;
-			AKOS->AKST = malloc(SWAP_CONSTANT_32(size) - 8);
-			readBytes(HE1_File, (uint8_t*)AKOS->AKST, SWAP_CONSTANT_32(size) - 8);
-			break;
-		case MKTAG('A', 'K', 'S', 'F'):
-			AKOS->AKSFLength = SWAP_CONSTANT_32(size) - 8;
-			AKOS->AKSF = malloc(SWAP_CONSTANT_32(size) - 8);
-			readBytes(HE1_File, (uint8_t*)AKOS->AKSF, SWAP_CONSTANT_32(size) - 8);
-			break;
+		//case MKTAG('A', 'K', 'C', 'T'):
+		//	fgetpos(HE1_File, &AKOS->AKCTOffset);
+		//	fseek(HE1_File, SWAP_CONSTANT_32(size) - 8, SEEK_CUR);
+		//	break;
+		//case MKTAG('A', 'K', 'S', 'T'):
+		//	AKOS->AKSTLength = SWAP_CONSTANT_32(size) - 8;
+		//	AKOS->AKST = malloc(SWAP_CONSTANT_32(size) - 8);
+		//	readBytes(HE1_File, (uint8_t*)AKOS->AKST, SWAP_CONSTANT_32(size) - 8);
+		//	break;
+		//case MKTAG('A', 'K', 'S', 'F'):
+		//	AKOS->AKSFLength = SWAP_CONSTANT_32(size) - 8;
+		//	AKOS->AKSF = malloc(SWAP_CONSTANT_32(size) - 8);
+		//	readBytes(HE1_File, (uint8_t*)AKOS->AKSF, SWAP_CONSTANT_32(size) - 8);
+		//	break;
 		default:
 			//printf("Unknown Signature\n");
 			fseek(HE1_File, SWAP_CONSTANT_32(size) - 8, SEEK_CUR);
@@ -215,7 +213,7 @@ void costumeDecodeData(Actor *a, int frame, uint usemask)
 {
 	//return;
 	uint anim;
-	const byte *r;
+	uint8_t* r;
 	//const AkosHeader *akhd;
 	uint offs;
 	int i;
@@ -267,15 +265,25 @@ void costumeDecodeData(Actor *a, int frame, uint usemask)
 
 	r += offs;
 
-	const uint8 *akstPtr = (uint8_t*)AKOS->AKST;//_vm->findResourceData(MKTAG('A','K','S','T'), _akos);
-	const uint8 *aksfPtr = (uint8_t*)AKOS->AKSF;// _vm->findResourceData(MKTAG('A','K','S','F'), _akos);
+	uint8* akstPtr = NULL;//(uint8_t*)AKOS->AKST;
+	//uint8* aksfPtr = (uint8_t*)AKOS->AKSF;
 
 	i = 0;
-	mask = (*r++ | *r++ << 8);//READ_LE_UINT16(r); r += 2;
+	/*printf("r[0] = %x\n", r[0]);
+	printf("r[1] = %x\n", r[1]);
+	printf("r[2] = %x\n", r[2]);
+	printf("r[3] = %x\n", r[3]);*/
+	mask = (r[0] | r[1] << 8); r += 2;
+	/*printf("anim = %d\n", anim);
+	printf("offs = %d\n", offs);
+	printf("mask = %d\n", mask);
+	printf("usemask = %d\n", usemask);
+	while(scanKeys(), keysHeld() == 0);
+	swiDelay(5000000);*/
 	do {
 		if (mask & 0x8000) {
-			const uint8 *akst = akstPtr;
-			const uint8 *aksf = aksfPtr;
+			uint8* akst = akstPtr;
+			//uint8* aksf = aksfPtr;
 
 			code = *r++;
 			if (usemask & 0x8000) {
@@ -289,12 +297,12 @@ void costumeDecodeData(Actor *a, int frame, uint usemask)
 					a->_cost.heCondMaskTable[i] = 0;
 
 					if (akst) {
-						int size = /*_vm->getResourceDataSize(akst)*/AKOS->AKSTLength / 8;
+						int size = AKOS->AKSTLength / 8;
 						if (size > 0) {
 							bool found = false;
 							while (size--) {
-								if ((*akst | *(akst + 1) << 8 | *(akst + 2) << 16 | *(akst + 3) << 24) == 0) {
-									a->_cost.heCondMaskTable[i] = (*(akst + 4) | *(akst + 5) << 8 | *(akst + 6) << 16 | *(akst + 7) << 24);//READ_LE_UINT32(akst + 4);
+								if ((akst[0] | akst[1] << 8 | akst[2] << 16 | akst[3] << 24) == 0) {
+									a->_cost.heCondMaskTable[i] = (akst[4] | akst[5] << 8 | akst[6] << 16 | akst[7] << 24);//READ_LE_UINT32(akst + 4);
 									found = true;
 									break;
 								}
@@ -313,19 +321,27 @@ void costumeDecodeData(Actor *a, int frame, uint usemask)
 					a->_cost.stopped &= ~(1 << i);
 					break;
 				default:
-					start = (*r++ | *r++ << 8);//READ_LE_UINT16(r); r += 2;
-					len = (*r++ | *r++ << 8);//READ_LE_UINT16(r); r += 2;
+					start = (r[0] | r[1] << 8); r += 2;
+					len = (r[0] | r[1] << 8); r += 2;
+
+					/*printf("i = %d\n", i);
+					printf("code = %d\n", code);
+					printf("start = %d\n", start);
+					printf("len = %d\n", len);
+
+					while(scanKeys(), keysHeld() == 0);
+					swiDelay(5000000);*/
 
 					a->_cost.heJumpOffsetTable[i] = 0;
 					a->_cost.heJumpCountTable[i] = 0;
-					if (aksf) {
-						int size = /*_vm->getResourceDataSize(aksf)*/AKOS->AKSFLength / 6;
+					/*if (aksf) {
+						int size = AKOS->AKSFLength / 6;
 						if (size > 0) {
 							bool found = false;
 							while (size--) {
-								if ((*aksf | *(aksf + 1) << 8) == start) {
-									a->_cost.heJumpOffsetTable[i] = (*(aksf + 2) | *(aksf + 3) << 8);
-									a->_cost.heJumpCountTable[i] =  (*(aksf + 4) | *(aksf + 5) << 8);
+								if ((aksf[0] | aksf[1] << 8) == start) {
+									a->_cost.heJumpOffsetTable[i] = (aksf[2] | aksf[3] << 8);
+									a->_cost.heJumpCountTable[i] =  (aksf[4] | aksf[5] << 8);
 									found = true;
 									break;
 								}
@@ -335,7 +351,7 @@ void costumeDecodeData(Actor *a, int frame, uint usemask)
 								printf("Error: Sequence not found in actor %p costume %d\n", (void *)a, a->_costume);
 							}
 						}
-					}
+					}*/
 
 					a->_cost.active[i] = code;
 					a->_cost.frame[i] = frame;
@@ -348,8 +364,8 @@ void costumeDecodeData(Actor *a, int frame, uint usemask)
 						if (size > 0) {
 							bool found = false;
 							while (size--) {
-								if ((*akst | *(akst + 1) << 8 | *(akst + 2) << 16 | *(akst + 3) << 24) == start) {
-									a->_cost.heCondMaskTable[i] = (*(akst + 4) | *(akst + 5) << 8 | *(akst + 6) << 16 | *(akst + 7) << 24);
+								if ((akst[0] | akst[1] << 8 | akst[2] << 16 | akst[3] << 24) == start) {
+									a->_cost.heCondMaskTable[i] = (akst[4] | akst[5] << 8 | akst[6] << 16 | akst[7] << 24);
 									found = true;
 									break;
 								}
@@ -373,10 +389,10 @@ void costumeDecodeData(Actor *a, int frame, uint usemask)
 	} while ((uint16)mask);
 	free(AKOS->AKCH);
 	AKOS->AKCH = NULL;//Otherwise weird memory errors occur
-	free(AKOS->AKST);
-	AKOS->AKST = NULL;
-	free(AKOS->AKSF);
-	AKOS->AKSF = NULL;
+	//free(AKOS->AKST);
+	//AKOS->AKST = NULL;
+	//free(AKOS->AKSF);
+	//AKOS->AKSF = NULL;
 	a->_cost.AKOS = AKOS;
 	//nrakos++;
 }
@@ -1221,34 +1237,51 @@ void renderCostume(Actor* a)
 {
 	uint heCondMaskIndex[32];// = new uint[32];
 	bool useCondMask = false;
-	uint _heCondMask = 1;
-	int xmove = 0;
-	int ymove = 0;
+	int xmove = a->x;//0;
+	int ymove = a->y;//0;
 	int x = 0;
 	int y = 0;
 	int lastDx = 0;
 	int lastDy = 0;
 	int limb = 0;	
 
-	/*for(int i =0 ;i < 16; i++)
+	int minx = 640 * 2;
+	int miny = 480 * 2;
+	int maxx = 0;
+	int maxy = 0;
+
+	for(int i = 0; i < 16; i++)
 	{
-	if(((int16)a->_cost.curpos[i]) >= 0) 
-	{
-	limb = i;
-	break;
+		if(a->_cost.active[i] == 6) 
+		{
+			limb = i;
+			break;
+		}
+		else if(a->_cost.active[i] != 0)
+		{
+			printf("a->_cost.active[%d] = %d\n", i, a->_cost.active[i]);
+			while(scanKeys(), keysHeld() == 0);
+			swiDelay(5000000);
+		}
 	}
-	}*/
 	if(((int16)a->_cost.curpos[limb]) == -2) return;
 
 	if(((int16)a->_cost.curpos[limb]) == -1) 
 	{
 		a->_cost.curpos[limb] = 0;
 	}
-	else
+	else if(((int16)a->_cost.curpos[limb]) != 0)
 	{
-		xmove = a->_cost.xmove[limb];// = xmove;
-		ymove = a->_cost.ymove[limb];// = ymove;
+		//xmove = a->_cost.xmove[limb];// = xmove;
+		//ymove = a->_cost.ymove[limb];// = ymove;
+		//lastDx = a->_cost.lastDx[limb];
+		//lastDy = a->_cost.lastDy[limb];
 	}
+
+	for (int i = 0; i < 32; i++)
+	{
+		heCondMaskIndex[i] = i;
+	} 
 
 	//printf("Draw!\n");
 
@@ -1271,88 +1304,158 @@ void renderCostume(Actor* a)
 		if (code & 0x80)
 			code = (ushort)((code << 8) | *seq++);
 
-		//printf("Code (%X)\n", code);
+		//printf("%d: Code (%X)\n", (uint32_t)seq - (uint32_t)seqstart, code);
 
 		if ((code >> 8) != 0xC0)
 		{
-			//printf("Bitmap (%X)\n", code);
+			/*if((code & 0xFFF) == 0) return;
+			printf("Bitmap (%d)\n", code & 0xFFF);
 			//Bitmap b2 = AKOS.GetFrame(code & 0xFFF);
 			//a->_cost.curpos[limb] = -2;
 			//freeAKOS(a->_cost.AKOS);
 			//a->_cost.AKOS = NULL;
 			//free(seqstart);
+			//a->_cost.curpos[limb] = a->_cost.start[limb];
+			//a->_cost.xmove[limb] = 0;
+			//a->_cost.ymove[limb] = 0;
+
+			int offset = code & 0xFFF;
+
+
+			fseek(HE1_File, a->_cost.AKOS->AKOFOffset + offset * 6, SEEK_SET);
+			uint32_t off_akcd;
+			uint16_t off_akci;
+			readU32LE(HE1_File, &off_akcd);
+			readU16LE(HE1_File, &off_akci);
+
+			//_srcptr = (uint8_t*)(a->_cost.AKOS->AKCD + off->akcd);
+			//costumeInfo = (const CostumeInfo *) (a->_cost.AKOS->AKCI + off->akci);
+
+			fseek(HE1_File, a->_cost.AKOS->AKCIOffset + off_akci, SEEK_SET);
+
+			//fseek(HE1_File, a->_cost.AKOS->AKCIOffset + (offset * 4), SEEK_SET);
+
+			uint16_t width;// = *((uint16_t*)(a->_cost.AKOS->AKCI + (offset * 4)));
+			uint16_t height;// = *((uint16_t*)(a->_cost.AKOS->AKCI + (offset * 4) + 2));
+
+			readU16LE(HE1_File, &width);
+			readU16LE(HE1_File, &height);
+
+			uint16_t rel_x;
+			uint16_t rel_y;
+
+			readU16LE(HE1_File, &rel_x);
+			readU16LE(HE1_File, &rel_y);
+
+			uint16_t move_x;
+			uint16_t move_y;
+
+			readU16LE(HE1_File, &move_x);
+			readU16LE(HE1_File, &move_y);
+
+			x = xmove + (int16)rel_x + a->x;
+			y = ymove + (int16)rel_y + a->y;
+
+			xmove += (int16)move_x;
+			ymove -= (int16)move_y;
+
+			//printf("Width: %d, Height: %d\n", width, height);
+
+			//while(scanKeys(), keysHeld() == 0);
+			//swiDelay(5000000);
+
+			if((a->_cost.AKOS->AKHD.Codec == 32 || a->_cost.AKOS->AKHD.Codec == 1) && a->_cost.AKOS->RGBS != NULL)
+			{
+			uint16_t* dst = (uint16_t*)malloc(width * height * 2);
+			for(int i = 0; i < width * height; i++)
+			{
+			dst[i] = 0x8000;
+			}
+			ConvertAKOSFrame(a->_cost.AKOS->AKCDOffset + off_akcd, (uint8_t*)dst, a->_cost.AKOS->AKPL, a->_cost.AKOS->AKPLLength, a->_cost.AKOS->RGBS, width, height, a->_cost.AKOS->AKHD.Codec);
+			for(int i = 0; i < height / 2; i++)
+			{
+			if((i * 2) + y >= 480) break;
+			for(int j = 0; j < width / 2; j++)
+			{
+			if((j * 2) + x >= 640) break;
+			if(dst[i * 2 * width + j * 2] != 0x8000)
+			ResultFrameBuffer[(y / 2 + i) * 512 + x / 2 + j] = Merge4Pixels(dst[i * 2 * width + j * 2], dst[i * 2 * width + j * 2 + 1], dst[(i * 2 + 1) * width + j * 2], dst[(i * 2 + 1) * width + j * 2 + 1]);//dst[i * 2 * width + j * 2];//0x001F;
+			}
+			}
+			free(dst);
+			}
+			else
+			{
+			for(int i = 0; i < height / 2; i++)
+			{
+			if((i * 2) + y >= 480) break;
+			for(int j = 0; j < width / 2; j++)
+			{
+			if((j * 2) + x >= 640) break;
+			ResultFrameBuffer[(y / 2 + i) * 512 + x / 2 + j] = 0x001F;
+			}
+			}
+			}
+
+			//return;
+			goto ret;*/
+			//continue;
 			return;
 			//goto ret;
-			continue;
 		}		
 
 		switch (code)
 		{
-		case 0xC001:
-			//continue;
-			return;
-			//goto ret;// b;
-			//return new Bitmap(1, 1);
-			break;
-		case 0xC0FF:
-			//a->_cost.curpos[limb] = -2;
-			//freeAKOS(a->_cost.AKOS);
-			//a->_cost.AKOS = NULL;
-			//free(seqstart);
-			return;
-			goto ret;// new Bitmap(1, 1);
-			break;
-		case 0xC010://Set Variable
+		case AKC_Return:
+			goto ret;
+		case AKC_SetVar://Set Variable
 			{
-				int16_t a_ = (int16)(*seq++ | *seq++ << 8);//Bytes.Read2BytesAsInt16(Data, Offset);
-				byte v = *seq++;//Data[Offset++];
+				int16_t a_ = (int16)(seq[0] | seq[1] << 8);
+				seq += 2;
+				byte v = *seq++;
 				a->_animVariable[v] = a_;
 				break;
 			}
-		case 0xC015://Start Sound
+		case AKC_CmdQue3://Start Sound
 			{
-				byte sound = *seq++;//Data[Offset++];
-				printf("0xC015: Start Sound (%d = %d)\n", sound, a->_sound[sound]);
+				byte sound = *seq++;
+				//printf("0xC015: Start Sound (%d = %d)\n", sound, a->_sound[sound]);
 				addSoundToQueue2(a->_sound[sound], 0, 0, 8);
-				//while(1);
 			}
 			break;
-		case 0xC018://ifSoundIsRunning(uword jmp,byte snd) 
+		case AKC_C018://ifSoundIsRunning(uword jmp,byte snd) 
 			{
-				ushort o = (*seq++ | *seq++ << 8);
+				ushort o = (seq[0] | seq[1] << 8);
+				seq += 2;
 				if(isSoundRunning(*seq++)) seq = (uint8_t*)seqstart + o;
 				break;
 			}
-		case 0xC019://ifSoundIsNotRunning
+		case AKC_C019://ifSoundIsNotRunning
 			{
-				ushort o = (*seq++ | *seq++ << 8);
+				ushort o = (seq[0] | seq[1] << 8); seq += 2;
 				if(!isSoundRunning(*seq++)) seq = (uint8_t*)seqstart + o;
 				break;
 			}
-		case 0xC020:
-		case 0xC025:
+		case AKC_ComplexChan:
+		case AKC_ComplexChan2:
 _0xC020:
 			{
 				if (code == 0xC025)
 				{
-					lastDx = (*seq++ | *seq++ << 8);//Bytes.Read2BytesAsUInt16(Data, Offset);
-					lastDy = (*seq++ | *seq++ << 8);//Bytes.Read2BytesAsUInt16(Data, Offset + 2);
+					lastDx = (seq[0] | seq[1] << 8); seq += 2;
+					lastDy = (seq[0] | seq[1] << 8); seq += 2;
 				}
-				int extra = *seq++;//Data[Offset++];
+				int extra = *seq++;
 				uint decflag = heCondMaskIndex[0];
 				for (int i = 0; i < extra; i++)
 				{
-					code = *(seq + 4);//Data[Offset + 4];
+					code = *(seq + 4);
 					if ((code & 0x80) != 0)
 						code = (ushort)((code << 8) | *(seq + 5));
 					int offset = code & 0xFFF;
 
-					//Bitmap b2 = AKOS.GetFrame(offset);
-					x = xmove + (int16)(*seq | *(seq+1) << 8)/* + 320 */+ a->x;
-					y = ymove + (int16)(*(seq+2) | *(seq+3) << 8) /*+ 240*/ + a->y;
-
-					//printf("X: %d\n", x);
-					//printf("Y: %d\n", y);
+					x = xmove + (int16)(seq[0] | seq[1] << 8);// + a->x;
+					y = ymove + (int16)(seq[2] | seq[3] << 8);// + a->y;
 
 					if (i == extra - 1)
 					{
@@ -1360,239 +1463,283 @@ _0xC020:
 						ymove -= lastDy;
 					}
 
-					/*ushort shadowMask = 0;
-					if (!useCondMask) decflag = 1;
-					else
-					{
-					int index = -1;
-					for (int j = 0; j < AKOS.AnimatedKST.Entries.Length; j++)
-					{
-					if (AKOS.AnimatedKST.Entries[j].Start == AKOS.AnimatedKCH.Animations[Animation].Limbs[Limb].Start)
-					{
-					index = (int)AKOS.AnimatedKST.Entries[j].ConditionMaskTableIndex / 128;
-					break;
-					}
-					}
-					if (heCondMaskIndex[i] > 31) decflag = 1;
-					else
-					{
-					uint cond = AKOS.AnimatedKConditionTable.Tables[/*AKOS.AnimatedKST.Entries[Limb].ConditionMaskTableIndex/Limb][heCondMaskIndex[i]];
-					if (cond == 0) decflag = 1;
-					else
-					{
-					uint type = cond & ~0x3FFFFFFFu;
-					cond &= 0x3FFFFFFFu;
-					if (type == 0x40000000)
-					{ // restored_bit
-					decflag = ((_heCondMask & cond) == cond) ? 1u : 0u;
-					}
-					else if (type == 0x80000000)
-					{ // dirty_bit
-					decflag = ((_heCondMask & cond) != 0) ? 0u : 1u;
-					}
-					else
-					{
-					decflag = ((_heCondMask & cond) != 0) ? 1u : 0u;
-					}
-					}
-					}
-					}
-					if (decflag != 0)
-					{
-					g.DrawImage(b2, x, y);
+					ushort shadowMask = 0;
+					//if (!useCondMask || a->_cost.AKOS->AKCTOffset == 0) {
+						decflag = 1;
+					/*} else {
+						fseek(HE1_File, a->_cost.AKOS->AKCTOffset + a->_cost.heCondMaskTable[limb] + heCondMaskIndex[i] * 4, SEEK_SET);
+						uint32 cond;// = READ_LE_UINT32(akct + cost.heCondMaskTable[limb] + heCondMaskIndex[i] * 4);
+						readU32LE(HE1_File, &cond);
+						if (cond == 0) {
+							decflag = 1;
+						} else {
+							uint32 type = cond & ~0x3FFFFFFF;
+							cond &= 0x3FFFFFFF;
+							//if (_vm->_game.heversion >= 90) {
+							shadowMask = cond & 0xE000;
+							cond &= ~0xE000;
+							//}
+							if (/*_vm->_game.heversion >= 90 &&/ cond == 0) {
+								decflag = 1;
+							} else if (type == 0x40000000) { // restored_bit
+								decflag = (a->_heCondMask & cond) == cond ? 1 : 0;
+							} else if (type == 0x80000000) { // dirty_bit
+								decflag = (a->_heCondMask & cond) ? 0 : 1;
+							} else {
+								decflag = (a->_heCondMask & cond) ? 1 : 0;
+							}
+						}
 					}*/
 
-					fseek(HE1_File, a->_cost.AKOS->AKOFOffset + offset * 6, SEEK_SET);
-					uint32_t off_akcd;
-					uint16_t off_akci;
-					readU32LE(HE1_File, &off_akcd);
-					readU16LE(HE1_File, &off_akci);
-
-					//_srcptr = (uint8_t*)(a->_cost.AKOS->AKCD + off->akcd);
-					//costumeInfo = (const CostumeInfo *) (a->_cost.AKOS->AKCI + off->akci);
-
-					fseek(HE1_File, a->_cost.AKOS->AKCIOffset + off_akci, SEEK_SET);
-
-					//fseek(HE1_File, a->_cost.AKOS->AKCIOffset + (offset * 4), SEEK_SET);
-
-					uint16_t width;// = *((uint16_t*)(a->_cost.AKOS->AKCI + (offset * 4)));
-					uint16_t height;// = *((uint16_t*)(a->_cost.AKOS->AKCI + (offset * 4) + 2));
-
-					readU16LE(HE1_File, &width);
-					readU16LE(HE1_File, &height);
-
-					//printf("Width: %d, Height: %d\n", width, height);
-
-					//while(scanKeys(), keysHeld() == 0);
-					//swiDelay(5000000);
-
-					if((a->_cost.AKOS->AKHD.Codec == 32 || a->_cost.AKOS->AKHD.Codec == 1) && a->_cost.AKOS->RGBS != NULL)
+					if (decflag != 0)
 					{
-						uint16_t* dst = (uint16_t*)malloc(width * height * 2);
-						for(int i = 0; i < width * height; i++)
+
+						fseek(HE1_File, a->_cost.AKOS->AKOFOffset + offset * 6, SEEK_SET);
+						uint32_t off_akcd;
+						uint16_t off_akci;
+						readU32LE(HE1_File, &off_akcd);
+						readU16LE(HE1_File, &off_akci);
+
+						fseek(HE1_File, a->_cost.AKOS->AKCIOffset + off_akci, SEEK_SET);
+
+						uint16_t width;
+						uint16_t height;
+
+						readU16LE(HE1_File, &width);
+						readU16LE(HE1_File, &height);
+
+
+						if((a->_cost.AKOS->AKHD.Codec == 32 || a->_cost.AKOS->AKHD.Codec == 1) && a->_cost.AKOS->RGBS != NULL)
 						{
-							dst[i] = 0x8000;
-						}
-						ConvertAKOSFrame(a->_cost.AKOS->AKCDOffset + off_akcd, (uint8_t*)dst, a->_cost.AKOS->AKPL, a->_cost.AKOS->AKPLLength, a->_cost.AKOS->RGBS, width, height, a->_cost.AKOS->AKHD.Codec);
-						for(int i = 0; i < height / 2; i++)
-						{
-							if((i * 2) + y >= 480) break;
-							for(int j = 0; j < width / 2; j++)
+							uint16_t* dst = &TempBuffer[0];
+							for(int i = 0; i < width * height; i++)
 							{
-								if((j * 2) + x >= 640) break;
-								if(dst[i * 2 * width + j * 2] != 0x8000)
-									ResultFrameBuffer[(y / 2 + i) * 512 + x / 2 + j] = Merge4Pixels(dst[i * 2 * width + j * 2], dst[i * 2 * width + j * 2 + 1], dst[(i * 2 + 1) * width + j * 2], dst[(i * 2 + 1) * width + j * 2 + 1]);//dst[i * 2 * width + j * 2];//0x001F;
+								dst[i] = 0x8000;
+							}
+							ConvertAKOSFrame(a->_cost.AKOS->AKCDOffset + off_akcd, (uint8_t*)dst, a->_cost.AKOS->AKPL, a->_cost.AKOS->AKPLLength, a->_cost.AKOS->RGBS, width, height, a->_cost.AKOS->AKHD.Codec);
+							for(int i = 0; i < height / 2; i++)
+							{
+								if((i * 2) + y >= 480) break;
+								for(int j = 0; j < width / 2; j++)
+								{
+									if((j * 2) + x >= 640) break;
+									if(dst[i * 2 * width + j * 2] != 0x8000)
+										ResultFrameBuffer[(y / 2 + i) * 512 + x / 2 + j] = Merge4Pixels(dst[i * 2 * width + j * 2], dst[i * 2 * width + j * 2 + 1], dst[(i * 2 + 1) * width + j * 2], dst[(i * 2 + 1) * width + j * 2 + 1]);//dst[i * 2 * width + j * 2];//0x001F;
+								}
 							}
 						}
-						free(dst);
-					}
-					else
-					{
-						for(int i = 0; i < height / 2; i++)
+						else
 						{
-							if((i * 2) + y >= 480) break;
-							for(int j = 0; j < width / 2; j++)
+							for(int i = 0; i < height / 2; i++)
 							{
-								if((j * 2) + x >= 640) break;
-								ResultFrameBuffer[(y / 2 + i) * 512 + x / 2 + j] = 0x001F;
+								if((i * 2) + y >= 480) break;
+								for(int j = 0; j < width / 2; j++)
+								{
+									if((j * 2) + x >= 640) break;
+									ResultFrameBuffer[(y / 2 + i) * 512 + x / 2 + j] = 0x001F;
+								}
 							}
 						}
+
+						if(minx > x) minx = x;
+						if(maxx < (x + width)) maxx = x + width;
+						if(miny > y) miny = y;
+						if(maxy < (y + height)) maxy = y + height;
 					}
 
 					seq += ((*(seq+4) & 0x80) != 0) ? 6 : 5;
 				}
 				goto ret;
-				//return b;
 			}
 			break;
-		case 0xC021:
-		case 0xC022:
+		case AKC_C021:
+		case AKC_C022:
 			{
 				int s = a->_cost.start[limb] + 4;//AKOS.AnimatedKCH.Animations[Animation].Limbs[Limb].Start + 4;
 				int extra = *(seq + 1);//Data[Offset + 1];
 				for (int i = 0; i < extra; i++)
 				{
-					heCondMaskIndex[i] = *((uint8_t*)(seqstart + s + i));//Data[s + i];
+					heCondMaskIndex[i] = ((uint8_t*)seqstart)[s + i];// *((uint8_t*)(seqstart + s + i));//Data[s + i];
 				}
 				useCondMask = true;
 				seq += extra + 2;
-				code = (ushort)((code == 0xC021) ? 0xC020 : 0xC025);
+				code = (ushort)((code == AKC_C021) ? AKC_ComplexChan : AKC_ComplexChan2);
 				goto _0xC020;
-				//if (code == 0xC020) goto case 0xC020;
-				//else goto case 0xC025;
-				//
 			}
 			break;
-		case 0xC030://Jump (used as a looping sometimes)
+		case AKC_Jump://Jump (used as a looping sometimes)
 			{
-				ushort o = (*seq++ | *seq++ << 8);//Bytes.Read2BytesAsUInt16(Data, Offset);
+				ushort o = (seq[0] | seq[1] << 8);
+				seq += 2;
 				seq = (uint8_t*)seqstart + o;
-				//if (o < Offset) return new Bitmap(1, 1);
-				//if (o + 4 != Offset) Offset = o;
-				//else return new Bitmap(1, 1);
 				break;
 			}
-		case 0xC040:
+		case AKC_AddVar:
 			{
-				short a_ = (int16)(*seq++ | *seq++ << 8);//Bytes.Read2BytesAsInt16(Data, Offset);
-				byte v = *seq++;//Data[Offset++];
-				//Offset += 3;
+				short a_ = (int16)(seq[0] | seq[1] << 8);
+				seq += 2;
+				byte v = *seq++;
 				a->_animVariable[v] += a_;
 				break;
 			}
-		case 0xC042://Start Sound
+		case AKC_C042://Start Sound
 			{
 				byte sound = *seq++;
-				printf("0xC042: Start Sound (%d)\n", sound);
+				//printf("0xC042: Start Sound (%d)\n", sound);
 				addSoundToQueue2(a->_sound[sound], 0, 0, 8);
-				//while(1);
 			}
 			break;
-		case 0xC070:
+		case AKC_JumpE:
 			{
-				ushort o = (*seq++ | *seq++ << 8);
+				ushort o = (seq[0] | seq[1] << 8);
+				seq += 2;
 				byte a_ = *seq++;
-				short b_ = (int16)(*seq++ | *seq++ << 8);
+				short b_ = (int16)(seq[0] | seq[1] << 8);
+				seq += 2;
 				if (a->_animVariable[a_] == b_) seq = (uint8_t*)seqstart + o;
 				break;
 			}
-		case 0xC071:
+		case AKC_JumpNE:
 			{
-				ushort o = (*seq++ | *seq++ << 8);
+				ushort o = (seq[0] | seq[1] << 8);
+				seq += 2;
 				byte a_ = *seq++;
-				short b_ = (int16)(*seq++ | *seq++ << 8);
+				short b_ = (int16)(seq[0] | seq[1] << 8);
+				seq += 2;
 				if (a->_animVariable[a_] != b_) seq = (uint8_t*)seqstart + o;
 				break;
 			}
-		case 0xC072:
+		case AKC_JumpL:
 			{
-				ushort o = (*seq++ | *seq++ << 8);
+				ushort o = (seq[0] | seq[1] << 8);
+				seq += 2;
 				byte a_ = *seq++;
-				short b_ = (int16)(*seq++ | *seq++ << 8);
+				short b_ = (int16)(seq[0] | seq[1] << 8);
+				seq += 2;
 				if (a->_animVariable[a_] < b_) seq = (uint8_t*)seqstart + o;
 				break;
 			}
-		case 0xC074:
+		case AKC_JumpG:
 			{
-				ushort o = (*seq++ | *seq++ << 8);
+				ushort o = (seq[0] | seq[1] << 8);
+				seq += 2;
 				byte a_ = *seq++;
-				short b_ = (int16)(*seq++ | *seq++ << 8);
+				short b_ = (int16)(seq[0] | seq[1] << 8);
+				seq += 2;
 				if (a->_animVariable[a_] > b_) seq = (uint8_t*)seqstart + o;
 				break;
 			}
-		case 0xC075:
+		case AKC_JumpGE:
 			{
-				ushort o = (*seq++ | *seq++ << 8);
+				ushort o = (seq[0] | seq[1] << 8);
+				seq += 2;
 				byte a_ = *seq++;
-				short b_ = (int16)(*seq++ | *seq++ << 8);
+				short b_ = (int16)(seq[0] | seq[1] << 8);
+				seq += 2;
 				if (a->_animVariable[a_] >= b_) seq = (uint8_t*)seqstart + o;
 				break;
 			}
-		case 0xC080:
+		case AKC_StartAnim:
 			{
 				byte a_ = *seq++;
+				startAnimActor(a, a_);
 				break;
 			}
-		case 0xC082://random(word min,word max,byte *ret) 
+		case AKC_Random://random(word min,word max,byte *ret) 
 			{
-				short min = (int16)(*seq++ | *seq++ << 8);
-				short max = (int16)(*seq++ | *seq++ << 8);
+				short min = (int16)(seq[0] | seq[1] << 8);
+				seq += 2;
+				short max = (int16)(seq[0] | seq[1] << 8);
+				seq += 2;
 				byte v = *seq++;
 				a->_animVariable[v] = rand() % (max - min) + min;
 				break;
 			}
-		case 0xC08D://ignore2
+		case AKC_HideActor:
 			{
-				byte a_ = *seq++;
+				putActor(a, 0, 0, 0);
 				break;
 			}
-		case 0xC0A0://resetPan
-			seq += 2;
+		case AKC_Ignore2://ignore2
+			{
+				byte a_ = *seq++;
+				addSoundToQueue2(a->_sound[a->_animVariable[a_]], 0, 0, 8);
+				break;
+			}
+		case AKC_C0A0:
+			{
+				uint8_t a_ = *seq++;
+				uint8_t b_ = *seq++;
+
+				_actorToPrintStrFor = a->_number;
+
+				a->_talkPosX = a->_heTalkQueue[a_].posX;
+				a->_talkPosY = a->_heTalkQueue[a_].posY;
+				a->_talkColor = a->_heTalkQueue[a_].color;
+
+				_string[0].loadDefault();
+				_string[0].color = a->_talkColor;
+
+				actorTalk(a->_heTalkQueue[a_].sentence);
+			}
 			break;
-		case 0xC0A1://Jump if Talking
-			seq += 2;
-			//Offset = Bytes.Read2BytesAsUInt16(Data, Offset);
+		case AKC_C0A1://Jump if Talking
+			{
+				ushort o = (seq[0] | seq[1] << 8);
+				seq += 2;
+				//printf("Jump if Talking (%d)\n", o);
+				if(a->_heTalking) seq = (uint8_t*)seqstart + o;
+			}
 			break;
-		case 0xC0A2://jumpIfNotTalking
-			seq += 2;
-			//Offset = Bytes.Read2BytesAsUInt16(Data, Offset);
+		case AKC_C0A2://jumpIfNotTalking
+			{
+				ushort o = (seq[0] | seq[1] << 8);
+				seq += 2;
+				//printf("Jump if NOT Talking (%d)\n", o);
+				if(!a->_heTalking) seq = (uint8_t*)seqstart + o;
+			}
 			break;
-		case 0xC0A3://resetVarPan
-			seq += 1;
+		case AKC_C0A3://resetVarPan
+			{
+				uint8_t a_ = a->_animVariable[*seq++];
+
+				_actorToPrintStrFor = a->_number;
+
+				a->_talkPosX = a->_heTalkQueue[a_].posX;
+				a->_talkPosY = a->_heTalkQueue[a_].posY;
+				a->_talkColor = a->_heTalkQueue[a_].color;
+
+				_string[0].loadDefault();
+				_string[0].color = a->_talkColor;
+
+				actorTalk(a->_heTalkQueue[a_].sentence);
+			}
 			break;
-		case 0xC0FE://Unknown
-			break;
+		case AKC_EndSeq:
+			a->_cost.curpos[limb] = (uint32_t)seq - (uint32_t)seqstart - 2;
+			printf("EndSeq\n");
+			while(scanKeys(), keysHeld() == 0);
+			swiDelay(5000000);
+			return;
 		default:
-			printf("Unknown\n");
-			while(1);
+			printf("Unknown (%X)\n", code);
+			while(scanKeys(), keysHeld() == 0);
+			swiDelay(5000000);
 			break;
 			//return new Bitmap(1, 1);
 		}
 	}
 ret:
 	a->_cost.curpos[limb] = (uint32_t)seq - (uint32_t)seqstart;
-	a->_cost.xmove[limb] = xmove;
-	a->_cost.ymove[limb] = ymove;
+	//a->_cost.xmove[limb] = xmove;
+	//a->_cost.ymove[limb] = ymove;
+	//a->_cost.lastDx[limb] = 0;//lastDx;
+	//a->_cost.lastDy[limb] = 0;//lastDy;
+	a->_top = miny;
+	a->_bottom = maxy;
+	a->_left = minx;
+	a->_right = maxx;
 	//free(seqstart);
 	return;
 }
+

@@ -28,7 +28,7 @@ AWIZ_t* readAWIZ()
 	uint32_t size;
 	fpos_t pos;
 	readU32LE(HE1_File, &sig);
-	printf("WIZ: %c%c%c%c\n", ((char*)&sig)[0], ((char*)&sig)[1], ((char*)&sig)[2], ((char*)&sig)[3]);
+	//printf("WIZ: %c%c%c%c\n", ((char*)&sig)[0], ((char*)&sig)[1], ((char*)&sig)[2], ((char*)&sig)[3]);
 	readU32LE(HE1_File, &size);
 	fgetpos(HE1_File, &pos);
 	uint32_t end = pos + SWAP_CONSTANT_32(size) - 8;
@@ -37,7 +37,7 @@ AWIZ_t* readAWIZ()
 	while(pos < (end - 4))
 	{
 		readU32LE(HE1_File, &sig);
-		printf("%c%c%c%c\n", ((char*)&sig)[0], ((char*)&sig)[1], ((char*)&sig)[2], ((char*)&sig)[3]);
+		//printf("%c%c%c%c\n", ((char*)&sig)[0], ((char*)&sig)[1], ((char*)&sig)[2], ((char*)&sig)[3]);
 		readU32LE(HE1_File, &size);
 		switch(sig)
 		{
@@ -87,7 +87,7 @@ void displayWizImage(WizImage *pwi) {
 	//if(pwi->flags)
 	{
 		uint32_t offs = getAWIZOffset(HE0_File, &HE0_Data, pwi->resNum);
-		printf("displayWizImage: %d (Offs: 0x%X)\n", pwi->resNum, offs);
+		//printf("displayWizImage: %d (Offs: 0x%X)\n", pwi->resNum, offs);
 		fseek(HE1_File, offs, SEEK_SET);
 		AWIZ_t* AWIZ = readAWIZ();
 		if(AWIZ->RGBS != NULL) ConvertWIZImage(AWIZ->WIZD, AWIZ->RGBS, pwi->x1, pwi->y1, AWIZ->Width, AWIZ->Height, AWIZ->Compression);
@@ -109,7 +109,7 @@ void processWizImage(const WizParameters *params) {
 		if(params->img.flags)
 	{
 		uint32_t offs = getAWIZOffset(HE0_File, &HE0_Data, params->img.resNum);
-		printf("displayWizImage: %d (Offs: 0x%X)\n", params->img.resNum, offs);
+		//printf("displayWizImage: %d (Offs: 0x%X)\n", params->img.resNum, offs);
 		fseek(HE1_File, offs, SEEK_SET);
 		AWIZ_t* AWIZ = readAWIZ();
 		ConvertWIZImage(AWIZ->WIZD, AWIZ->RGBS, params->img.x1, params->img.y1, AWIZ->Width, AWIZ->Height, AWIZ->Compression);
@@ -294,7 +294,141 @@ void loadWizCursor(int resId, int palette) {
 	printf("WizCursor: %d (Offs: 0x%X)\n", resId, offs);
 	fseek(HE1_File, offs, SEEK_SET);
 	AWIZ_t* AWIZ = readAWIZ();
+	for(int i = 0; i < 32 * 32; i++)
+	{
+		CursorBuffer[i] = 0x8000;
+	}
 	if(AWIZ->RGBS != NULL) ConvertWIZCursor(AWIZ->WIZD, (uint8_t*)&CursorBuffer[0], AWIZ->RGBS, AWIZ->Width, AWIZ->Height, AWIZ->Compression);
 	else ConvertWIZCursor(AWIZ->WIZD, (uint8_t*)&CursorBuffer[0], &RoomResource->RMDA->PALS->WRAP->APAL->data, AWIZ->Width, AWIZ->Height, AWIZ->Compression);
 	freeAWIZ(AWIZ);
+}
+
+WizPolygon _polygons[NUM_POLYGONS]; 
+
+void polygonStore(int id, bool flag, int vert1x, int vert1y, int vert2x, int vert2y, int vert3x, int vert3y, int vert4x, int vert4y)
+{
+	WizPolygon *wp = NULL;
+	for (int i = 0; i < ARRAYSIZE(_polygons); ++i) {
+		if (_polygons[i].id == 0) {
+			wp = &_polygons[i];
+			break;
+		}
+	}
+	if (!wp) {
+		printf("Error: Wiz::polygonStore: out of polygon slot, max = %d\n", ARRAYSIZE(_polygons));
+	}
+
+	wp->vert[0].x = vert1x;
+	wp->vert[0].y = vert1y;
+	wp->vert[1].x = vert2x;
+	wp->vert[1].y = vert2y;
+	wp->vert[2].x = vert3x;
+	wp->vert[2].y = vert3y;
+	wp->vert[3].x = vert4x;
+	wp->vert[3].y = vert4y;
+	wp->vert[4].x = vert1x;
+	wp->vert[4].y = vert1y;
+	wp->id = id;
+	wp->numVerts = 5;
+	wp->flag = flag;
+
+	polygonCalcBoundBox(wp->vert, wp->numVerts, wp->bound);
+} 
+
+void polygonCalcBoundBox(Point *vert, int numVerts, Rect &bound)
+{
+	bound.left = 10000;
+	bound.top = 10000;
+	bound.right = -10000;
+	bound.bottom = -10000;
+
+	// compute bounding box
+	for (int j = 0; j < numVerts; j++) {
+		Rect r(vert[j].x, vert[j].y, vert[j].x + 1, vert[j].y + 1);
+		bound.extend(r);
+	}
+}
+
+void polygonErase(int fromId, int toId) {
+	for (int i = 0; i < ARRAYSIZE(_polygons); i++) {
+		if (_polygons[i].id >= fromId && _polygons[i].id <= toId)
+			memset(&_polygons[i], 0, sizeof(WizPolygon));
+	}
+}
+
+int polygonHit(int id, int x, int y) {
+	for (int i = 0; i < ARRAYSIZE(_polygons); i++) {
+		if ((id == 0 || _polygons[i].id == id) && _polygons[i].bound.contains(x, y)) {
+			if (polygonContains(_polygons[i], x, y)) {
+				return _polygons[i].id;
+			}
+		}
+	}
+	return 0;
+} 
+
+bool polygonDefined(int id) {
+	for (int i = 0; i < ARRAYSIZE(_polygons); i++)
+		if (_polygons[i].id == id)
+			return true;
+	return false;
+}
+
+bool polygonContains(const WizPolygon &pol, int x, int y) {
+	int pi = pol.numVerts - 1;
+	bool diry = (y < pol.vert[pi].y);
+	bool curdir;
+	bool r = false;
+
+	for (int i = 0; i < pol.numVerts; i++) {
+		curdir = (y < pol.vert[i].y);
+
+		if (curdir != diry) {
+			if (((pol.vert[pi].y - pol.vert[i].y) * (pol.vert[i].x - x) <
+				 (pol.vert[pi].x - pol.vert[i].x) * (pol.vert[i].y - y)) == diry)
+				r = !r;
+		}
+
+		pi = i;
+		diry = curdir;
+	}
+
+	// HE80+
+	int a, b;
+	pi = pol.numVerts - 1;
+	if (r == 0) {
+		for (int i = 0; i < pol.numVerts; i++) {
+			if (pol.vert[i].y == y && pol.vert[i].y == pol.vert[pi].y) {
+
+				a = pol.vert[i].x;
+				b = pol.vert[pi].x;
+
+				if (pol.vert[i].x >= pol.vert[pi].x)
+					a = pol.vert[pi].x;
+
+				if (pol.vert[i].x > pol.vert[pi].x)
+					b = pol.vert[i].x;
+
+				if (x >= a && x <= b)
+					return 1;
+
+			} else if (pol.vert[i].x == x && pol.vert[i].x == pol.vert[pi].x) {
+
+				a = pol.vert[i].y;
+				b = pol.vert[i].y;
+
+				if (pol.vert[i].y >= pol.vert[pi].y)
+					a = pol.vert[pi].y;
+
+				if (pol.vert[i].y <= pol.vert[pi].y)
+					b = pol.vert[pi].y;
+
+				if (y >= a && y <= b)
+					return 1;
+			}
+			pi = i;
+		}
+	}
+
+	return r;
 }

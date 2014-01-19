@@ -3,6 +3,8 @@
 #include <actor.h>
 #include <akos.h>
 #include <script.h>
+#include <sounds.h>
+#include <objects.h>
 
 
 byte _curActor;
@@ -44,7 +46,7 @@ void initActor(Actor* a, int mode)
 {
 	a->_number = _curActor;
 	if (mode == -1) {
-		a->_top = a->_bottom = 0;
+		a->_top = a->_bottom = a->_left = a->_right = 0;
 		a->_needRedraw = false;
 		a->_needBgReset = false;
 		a->_costumeNeedsInit = false;
@@ -111,7 +113,7 @@ void initActor(Actor* a, int mode)
 	a->_walkScript = 0;
 	a->_talkScript = 0;
 
-	//_vm->_classData[a->_number] = 0; 
+	_classData[a->_number] = 0; 
 
 	if (mode == -1) {
 		a->_heOffsX = a->_heOffsY = 0;
@@ -164,9 +166,9 @@ void putActor(Actor* a, int x, int y) {
 } 
 
 void putActor(Actor* a, int dstX, int dstY, int newRoom) {
-	//if (a->_visible && _currentRoom != newRoom && getTalkingActor() == _number) {
-	//_vm->stopTalk();
-	//}
+	if (a->_visible && _currentRoom != newRoom && getTalkingActor() == a->_number) {
+		stopTalk();
+	}
 
 	a->x = dstX;
 	a->y = dstY;
@@ -358,16 +360,89 @@ void setActorCostume(Actor* a, int c) {
 	//}
 } 
 
+void setHEFlag(Actor* a, int bit, int set)
+{
+	// Note that condition is inverted
+	if (!set) {
+		a->_heFlags |= bit;
+	} else {
+		a->_heFlags &= ~bit;
+	}
+}
+
+void setUserCondition(Actor* a, int slot, int set)
+{
+	const int condMaskCode = /*(_vm->_game.heversion >= 85) ? */0x1FFF;// : 0x3FF;
+	if (set == 0) {
+		a->_heCondMask &= ~(1 << (slot + 0xF));
+	} else {
+		a->_heCondMask |= 1 << (slot + 0xF);
+	}
+	if (a->_heCondMask & condMaskCode) {
+		a->_heCondMask &= ~1;
+	} else {
+		a->_heCondMask |= 1;
+	}
+}
+
+bool isUserConditionSet(Actor* a, int slot)
+{
+	return (a->_heCondMask & (1 << (slot + 0xF))) != 0;
+}
+
+void setTalkCondition(Actor* a, int slot)
+{
+	const int condMaskCode = /*(_vm->_game.heversion >= 85) ?*/ 0x1FFF;// : 0x3FF;
+	a->_heCondMask = (a->_heCondMask & ~condMaskCode) | 1;
+	if (slot != 1) {
+		a->_heCondMask |= 1 << (slot - 1);
+		if (a->_heCondMask & condMaskCode) {
+			a->_heCondMask &= ~1;
+		} else {
+			a->_heCondMask |= 1;
+		}
+	}
+}
+
+bool isTalkConditionSet(Actor* a, int slot)
+{
+	return (a->_heCondMask & (1 << (slot - 1))) != 0;
+}
+
+int getTalkingActor()
+{
+	return VAR(VAR_TALK_ACTOR);
+}
+
+void setTalkingActor(int i)
+{
+	if (i == 255) {
+		//_system->clearFocusRectangle();
+	} else {
+		// Work out the screen co-ordinates of the actor
+		//int x = _actors[i]->x - (camera._cur.x - (_screenWidth >> 1));
+		//int y = _actors[i]->_top - (camera._cur.y - (_screenHeight >> 1));
+
+		// Set the focus area to the calculated position
+		// TODO: Make the size adjust depending on what it's focusing on.
+		//_system->setFocusRectangle(Common::Rect::center(x, y, 192, 128));
+	}
+
+	VAR(VAR_TALK_ACTOR) = i;
+} 
+
 void actorTalk(const byte *msg) {
 	Actor *a;
 
+	printf("Actor: %s\n", (char*)msg);
+
 	//convertMessageToString(msg, _charsetBuffer, sizeof(_charsetBuffer));
 
-	/*if (_actorToPrintStrFor == 0xFF) {
+	if (_actorToPrintStrFor == 0xFF) {
 		//if (!_keepText) {
-			//stopTalk();
+			stopTalk();
 		//}
-		//setTalkingActor(0xFF);
+		setTalkingActor(0xFF);
 	} else {
 		int oldact;
 
@@ -376,29 +451,77 @@ void actorTalk(const byte *msg) {
 			oldact = 0xFF;
 		} else {
 			//if (!_keepText) {
-				//stopTalk();
+				stopTalk();
 			//}
-			//setTalkingActor(a->_number);
+			setTalkingActor(a->_number);
 			a->_heTalking = true;
-			//if (!_string[0].no_talk_anim) {
-			//	a->runActorTalkScript(a->_talkStartFrame);
-			//	_useTalkAnims = true;
-			//}
-			//oldact = getTalkingActor();
+			if (!_string[0].no_talk_anim) {
+				//runActorTalkScript(a, a->_talkStartFrame);
+				//_useTalkAnims = true;
+			}
+			oldact = getTalkingActor();
 		}
 		if (oldact >= 0x80)
 			return;
-	}*/
+	}
 
-	//if (getTalkingActor() > 0x7F) 
+	if (getTalkingActor() > 0x7F) ;
 	//	_charsetColor = (byte)_string[0].color;
 	//_charsetBufPos = 0;
 	//_talkDelay = 0;
 	_haveMsg = 0xFF;
 	VAR(VAR_HAVE_MSG) = 0xFF;
 	//_haveActorSpeechMsg = true;
+
+	char* str = (char*)msg;
+	str += 2;
+
+	int i = 0;
+	char c = *str++;
+	char value[32]; 
+	while (c != 44)
+	{
+		value[i] = c;
+		c = *str++;
+		i++;
+	}
+	value[i] = 0;
+	int talk_sound_a = atoi(value); 
+	//printf("sound: %d\n", talk_sound_a);
+
+	addSoundToQueue2(0x7FFF, talk_sound_a, 2, 8);
+
 	//CHARSET_1();
 } 
+
+void stopTalk()
+{
+	int act;
+
+	stopSound(-1);//_sound->stopTalkSound();
+
+	_haveMsg = 0;
+	//_talkDelay = 0;
+
+	act = getTalkingActor();
+	if (act && act < 0x80) {
+		Actor *a = &_actors[act];//derefActor(act, "stopTalk");
+		/*if ((_game.version >= 7 && !_string[0].no_talk_anim) ||
+			(_game.version <= 6 && a->isInCurrentRoom() && _useTalkAnims)) {
+			a->runActorTalkScript(a->_talkStopFrame);
+			_useTalkAnims = false;
+		}
+		if (_game.version <= 7 && _game.heversion == 0)
+			setTalkingActor(0xFF);
+		if (_game.heversion != 0)*/
+			a->_heTalking = false;
+	}
+
+	setTalkingActor(0);
+
+	//_keepText = false;
+	//restoreCharsetBg();
+}
 
 int getActorFromPos(int x, int y) {
 	int curActor, i;
@@ -408,10 +531,11 @@ int getActorFromPos(int x, int y) {
 
 	curActor = 0;
 	for (i = 1; i < _numActors; i++) {
-		if (/*testGfxUsageBit(x / 8, i) && !getClass(i, kObjectClassUntouchable)
-			&&*/ y >= _actors[i]._top && y <= _actors[i]._bottom
-			&& (_actors[i].y > _actors[curActor].y || curActor == 0))
-				curActor = i;
+		//if (/*testGfxUsageBit(x / 8, i) && !getClass(i, kObjectClassUntouchable)
+		//	&&*/ y >= _actors[i]._top && y <= _actors[i]._bottom
+		//	&& (_actors[i].y > _actors[curActor].y || curActor == 0))
+		//		curActor = i;
+		if(_actors[i]._visible && y >= _actors[i]._top && y <= _actors[i]._bottom && x >= _actors[i]._left && x <= _actors[i]._right) curActor = i;
 	}
 
 	return curActor;
@@ -459,3 +583,26 @@ void showActors() {
 			showActor(&_actors[i]);
 	}
 } 
+
+void drawActorToBackBuf(Actor* a, int x, int y)
+{
+	//int curTop = a->_top;
+	//int curBottom = a->_bottom;
+
+	a->x = x;
+	a->y = y;
+
+	a->_drawToBackBuf = true;
+	a->_needRedraw = true;
+	//drawActorCostume(a);
+
+	a->_drawToBackBuf = false;
+	a->_needRedraw = true;
+	//drawActorCostume(a);
+	a->_needRedraw = false;
+
+	//if (a->_top > curTop)
+	//	a->_top = curTop;
+	//if (a->_bottom < curBottom)
+	//	a->_bottom = curBottom;
+}

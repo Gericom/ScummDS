@@ -71,6 +71,9 @@ struct CostumeData {
 	uint16 xmove[16];
 	uint16 ymove[16];
 
+	uint16 lastDx[16];
+	uint16 lastDy[16];
+
 	/* HE specific */
 	uint16 heJumpOffsetTable[16];
 	uint16 heJumpCountTable[16];
@@ -82,7 +85,7 @@ struct CostumeData {
 		stopped = 0;
 		for (int i = 0; i < 16; i++) {
 			active[i] = 0;
-			curpos[i] = start[i] = end[i] = frame[i] = 0xFFFF;
+			curpos[i] = start[i] = end[i] = frame[i] = xmove[i] = ymove[i] = lastDx[i] = lastDy[i] = 0xFFFF;
 		}
 	}
 };
@@ -160,10 +163,10 @@ struct Actor
 
 	int16 x;
 	int16 y;
+
+	int _left, _right;
  
 };
-
-
 
 extern byte _curActor;
 extern byte _numActors;
@@ -204,11 +207,20 @@ void setScale(Actor* a, int sx, int sy);
 void animateActor(Actor* a, int anim);
 void startAnimActor(Actor* a, int f);
 void setActorCostume(Actor* a, int c);
+void setHEFlag(Actor* a, int bit, int set);
+void setUserCondition(Actor* a, int slot, int set);
+bool isUserConditionSet(Actor* a, int slot);
+void setTalkCondition(Actor* a, int slot);
+bool isTalkConditionSet(Actor* a, int slot);
+int getTalkingActor();
+void setTalkingActor(int i);
 void actorTalk(const byte *msg);
+void stopTalk();
 int getActorFromPos(int x, int y);
 void hideActor(Actor* a);
 void showActor(Actor* a);
 void showActors();
+void drawActorToBackBuf(Actor* a, int x, int y);
 
 
 #endif

@@ -14,6 +14,7 @@
 #include <room.h>
 #include <opcodes.h>
 #include <actor.h>
+#include <ioutil.h>
 
 uint32_t _numGlobalScripts;
 VirtualMachineState vm;
@@ -37,9 +38,9 @@ int32 _roomVars[4096];
 int32 _scummVars[1024];
 //byte _bitVars[512];
 
-uint32_t _numArray = 512;
+uint32_t _numArray = 8192;
 
-ArrayHeader* _arrays[512];
+ArrayHeader* _arrays[8192];
 
 static int done = 0;
 
@@ -85,7 +86,7 @@ void runScript(int script, bool freezeResistant, bool recursive, int *lvarptr, i
 	}
 
 	if (cycle == 0)
-		cycle = VAR(VAR_SCRIPT_CYCLE);
+		cycle = /*(_game.heversion >= 90) ? */VAR(VAR_SCRIPT_CYCLE);// : 1;
 
 	slot = getScriptSlot();
 
@@ -105,6 +106,54 @@ void runScript(int script, bool freezeResistant, bool recursive, int *lvarptr, i
 	runScriptNested(slot);
 } 
 
+void runObjectScript(int object, int entry, bool freezeResistant, bool recursive, int *vars, int slot, int cycle)
+{
+	ScriptSlot *s;
+	uint32 obcd;
+	int where, offs;
+
+	if (!object)
+		return;
+
+	if (!recursive)
+		stopObjectScript(object);
+
+	//where = whereIsObject(object);
+
+	//if (where == WIO_NOT_FOUND) {
+	//	warning("Code for object %d not in room %d", object, _roomResource);
+	//	return;
+	//}
+
+	//obcd = getOBCDOffs(object);
+
+	// Find a free object slot, unless one was specified
+	if (slot == -1)
+		slot = getScriptSlot();
+
+	offs = getVerbEntrypoint(object, entry);
+	if (offs == 0)
+		return;
+
+	if (cycle == 0)
+		cycle = /*(_game.heversion >= 90) ? */VAR(VAR_SCRIPT_CYCLE);// : 1;
+
+	s = &vm.slot[slot];
+	s->number = object;
+	s->offs = /*obcd + */offs - 0x8;
+	s->status = ssRunning;
+	s->where = 6;//where; //Maybe tempoary
+	s->freezeResistant = freezeResistant;
+	s->recursive = recursive;
+	s->freezeCount = 0;
+	s->delayFrameCount = 0;
+	s->cycle = cycle;
+
+	initializeLocals(slot, vars);
+
+	runScriptNested(slot);
+}
+
 void initializeLocals(int slot, int *vars) {
 	int i;
 	if (!vars) {
@@ -115,6 +164,97 @@ void initializeLocals(int slot, int *vars) {
 			vm.localvar[slot][i] = vars[i];
 	}
 } 
+
+int getVerbEntrypoint(int obj, int entry)
+{
+	//const byte *objptr, *verbptr;
+	//int verboffs;
+
+	//if (whereIsObject(obj) == WIO_NOT_FOUND)
+	//	return 0;
+
+	//objptr = getOBCDFromObject(obj);
+	//assert(objptr);
+
+	/*if (_game.version == 0)
+		verbptr = objptr + 14;
+	else if (_game.version <= 2)
+		verbptr = objptr + 15;
+	else if ((_game.id == GID_LOOM && _game.platform == Common::kPlatformPCEngine) ||
+		_game.features & GF_OLD_BUNDLE)
+		verbptr = objptr + 17;
+	else if (_game.features & GF_SMALL_HEADER)
+		verbptr = objptr + 19;
+	else
+		verbptr = findResource(MKTAG('V','E','R','B'), objptr);
+
+	assert(verbptr);
+
+	verboffs = verbptr - objptr;
+
+	if (!(_game.features & GF_SMALL_HEADER))
+		verbptr += _resourceHeaderSize;
+
+	if (_game.version == 8) {
+		const uint32 *ptr = (const uint32 *)verbptr;
+		uint32 verb;
+		do {
+			verb = READ_LE_UINT32(ptr);
+			if (!verb)
+				return 0;
+			if (verb == (uint32)entry || verb == 0xFFFFFFFF)
+				break;
+			ptr += 2;
+		} while (1);
+		return verboffs + 8 + READ_LE_UINT32(ptr + 1);
+	} else if (_game.version <= 2) {
+		do {
+			const int kFallbackEntry = (_game.version == 0 ? 0x0F : 0xFF);
+			if (!*verbptr)
+				return 0;
+			if (*verbptr == entry || *verbptr == kFallbackEntry)
+				break;
+			verbptr += 2;
+		} while (1);
+
+		return *(verbptr + 1);
+	} else {*/
+
+	OBCD_t* dta = NULL;
+
+	for (int i = 0; i < RoomResource->RMDA->RMHD.NrObjects; i++)
+	{
+		if(RoomResource->RMDA->OBCD[i]->ObjectId == obj)
+		{
+			dta = RoomResource->RMDA->OBCD[i];
+			break;
+		}
+	}
+	if(dta == NULL)
+	{
+		printf("Error: Object not in room!\n");
+		while(scanKeys(), keysHeld() == 0);
+		swiDelay(5000000);
+	}
+
+	fseek(HE1_File, dta->VERBOffset, SEEK_SET);
+	uint8_t verb;
+	readByte(HE1_File, &verb);
+
+		do {
+			if (!verb)
+				return 0;
+			if (verb == entry || verb == 0xFF)
+				break;
+			fseek(HE1_File, 2, SEEK_CUR);
+			readByte(HE1_File, &verb);
+		} while (1);
+		uint16_t offs;
+		readU16LE(HE1_File, &offs);
+			return /*dta->VERBOffset + */offs;
+	//}
+}
+
 
 /* Stop script 'script' */
 void stopScript(int script) {
@@ -140,6 +280,39 @@ void stopScript(int script) {
 	for (i = 0; i < vm.numNestedScripts; ++i) {
 		if (vm.nest[i].number == script &&
 				(vm.nest[i].where == WIO_GLOBAL || vm.nest[i].where == WIO_LOCAL)) {
+			//nukeArrays(vm.nest[i].slot);
+			vm.nest[i].number = 0;
+			vm.nest[i].slot = 0xFF;
+			vm.nest[i].where = 0xFF;
+		}
+	}
+}
+
+/* Stop an object script 'script'*/
+void stopObjectScript(int script)
+{
+	ScriptSlot *ss;
+	int i;
+
+	if (script == 0)
+		return;
+
+	ss = vm.slot;
+	for (i = 0; i < NUM_SCRIPT_SLOT; i++, ss++) {
+		if (script == ss->number && ss->status != ssDead &&
+		    (ss->where == WIO_ROOM || ss->where == WIO_INVENTORY || ss->where == WIO_FLOBJECT || ss->where == 6)) {
+			if (ss->cutsceneOverride) printf("Error: Object %d stopped with active cutscene/override\n", script);
+			ss->number = 0;
+			ss->status = ssDead;
+			//nukeArrays(i);
+			if (_currentScript == i)
+				_currentScript = 0xFF;
+		}
+	}
+
+	for (i = 0; i < vm.numNestedScripts; ++i) {
+		if (vm.nest[i].number == script &&
+				(vm.nest[i].where == WIO_ROOM || vm.nest[i].where == WIO_INVENTORY || vm.nest[i].where == WIO_FLOBJECT || ss->where == 6)) {
 			//nukeArrays(vm.nest[i].slot);
 			vm.nest[i].number = 0;
 			vm.nest[i].slot = 0xFF;
@@ -226,14 +399,14 @@ void getScriptBaseAddress() {
 	int idx;
 
 	//void* old = (void*)_scriptOrgPointer;
-	//if(_scriptOrgPointer != NULL) 
-	//{
+	if(_scriptOrgPointer != NULL) 
+	{
 		//printf("Freeing (_scriptOrgPointer = 0x%X)\n", (uint32_t)_scriptOrgPointer);
 		//while(scanKeys(), keysHeld() == 0);
 		//swiDelay(5000000);
-		//free(_scriptOrgPointer);
-		//_scriptOrgPointer = NULL;
-	//}
+		free(_scriptOrgPointer);
+		_scriptOrgPointer = NULL;
+	}
 
 	if (_currentScript == 0xFF)
 		return;
@@ -278,6 +451,31 @@ void getScriptBaseAddress() {
 	//	assert(idx < _numFlObject);
 	//	_lastCodePtr = &_res->_types[rtFlObject][idx]._address;
 	//	break;
+	case 6:
+		{
+			OBCD_t* dta = NULL;
+
+			for (int i = 0; i < RoomResource->RMDA->RMHD.NrObjects; i++)
+			{
+				if(RoomResource->RMDA->OBCD[i]->ObjectId == ss->number)
+				{
+					dta = RoomResource->RMDA->OBCD[i];
+					break;
+				}
+			}
+			if(dta == NULL)
+			{
+				printf("Error: Object not in room!\n");
+				while(scanKeys(), keysHeld() == 0);
+				swiDelay(5000000);
+			}
+
+			fseek(HE1_File, dta->VERBOffset, SEEK_SET);
+			void* data = malloc(dta->VERBLength);
+			readBytes(HE1_File, (uint8_t*)data, dta->VERBLength);
+			_scriptOrgPointer = (uint8_t*)data;
+		}
+		break;
 	default:
 		printf("Error: Bad type while getting base address\n");
 		while(1);
@@ -334,7 +532,7 @@ void executeScript() {
 	}
 }
 
-void executeOpcode(byte i)
+inline void executeOpcode(byte i)
 {
 	switch(i)
 	{
@@ -343,6 +541,7 @@ void executeOpcode(byte i)
 	case 0x02: _0x02_PushDWord(); break;
 	case 0x03: _0x03_PushWordVar(); break;
 	case 0x04: _0x04_GetScriptString(); break;
+	case 0x06: _0x06_ByteArrayRead(); break;
 	case 0x07: _0x07_WordArrayRead(); break;
 	case 0x0A: _0x0A_Dup_n(); break;
 	case 0x0B: _0x0B_WordArrayIndexedRead(); break;
@@ -370,22 +569,29 @@ void executeOpcode(byte i)
 	case 0x26: _0x26_SetSpriteInfo(); break;
 	case 0x27: _0x27_GetSpriteGroupInfo(); break;
 	case 0x28: _0x28_SetSpriteGroupInfo(); break;
+	case 0x29: _0x29_GetWizData(); break;
+	case 0x2B: _0x2B_StartScriptUnk(); break;
 	case 0x34: _0x34_FindAllObjectsWithClassOf(); break;
 	case 0x37: _0x37_Dim2Dim2Array(); break;
 	case 0x39: _0x39_GetLinesIntersectionPoint(); break;
 	case 0x3A: _0x3A_SortArray(); break;
 	case 0x43: _0x43_WriteWordVar(); break;
+	case 0x45: _0x45_CreateSound(); break;
 	//case 0x46: _0x46_ByteArrayWrite(); break;
 	case 0x47: _0x47_WordArrayWrite(); break;
 	case 0x4B: _0x4B_WordArrayIndexedWrite(); break;
+	case 0x4D: _0x4D_ReadConfigFile(); break;
+	case 0x4E: _0x4E_WriteConfigFile(); break;
 	case 0x4F: _0x4F_WordVarInc(); break;
 	case 0x53: _0x53_WordArrayInc(); break;
 	case 0x57: _0x57_WordVarDec(); break;
 	case 0x58: _0x58_GetTimer(); break;
 	case 0x59: _0x59_SetTimer(); break;
+	case 0x5A: _0x5A_GetSoundPosition(); break;
 	case 0x5C: _0x5C_If(); break;
 	case 0x5D: _0x5D_IfNot(); break;
 	case 0x5E: _0x5E_StartScript(); break;
+	case 0x60: _0x60_StartObject(); break;
 	case 0x61: _0x61_DrawObject(); break;
 	case 0x64: _0x64_GetNumFreeArrays(); break;
 	case 0x65: _0x65_StopObjectCode(); break;
@@ -420,6 +626,7 @@ void executeOpcode(byte i)
 	case 0x9F: _0x9F_GetActorFromXY(); break;
 	case 0xA0: _0xA0_FindObject(); break;
 	case 0xA1: _0xA1_PseudoRoom(); break;
+	case 0xA3: _0xA3_GetVerbEntrypoint(); break;
 	case 0xA4: _0xA4_ArrayOps(); break;
 	case 0xA5: _0xA5_FontUnk(); break;
 	case 0xA6: _0xA6_DrawBox(); break;
@@ -442,28 +649,38 @@ void executeOpcode(byte i)
 	case 0xBF: _0xBF_StartScriptQuick2(); break;
 	case 0xC0: _0xC0_Dim2DimArray(); break;
 	case 0xC1: _0xC1_TraceStatus(); break;
+	case 0xC4: _0xC4_Abs(); break;
 	case 0xC9: _0xC9_KernelSetFunctions(); break;
 	case 0xCA: _0xCA_DelayFrames(); break;
 	case 0xCB: _0xCB_PickOneOf(); break;
+	case 0xCD: _0xCD_StampObject(); break;
 	case 0xCE: _0xCE_DrawWizImage(); break;
 	case 0xD0: _0xD0_GetDateTime(); break;
 	case 0xD1: _0xD1_StopTalking(); break;
 	case 0xD2: _0xD2_GetAnimateVariable(); break;
+	case 0xD4: _0xD4_Shuffle(); break;
 	case 0xD5: _0xD5_JumpToScript(); break;
 	case 0xD6: _0xD6_BAnd(); break;
 	case 0xD7: _0xD7_BOr(); break;
 	case 0xD9: _0xD9_CloseFile(); break;
 	case 0xDA: _0xDA_OpenFile(); break;
+	case 0xDB: _0xDB_ReadFile(); break;
 	case 0xDD: _0xDD_FindAllObjects(); break;
 	case 0xDE: _0xDE_DeleteFile(); break;
 	case 0xE1: _0xE1_GetPixel(); break;
 	case 0xE2: _0xE2_LocalizeArrayToScript(); break;
 	case 0xE3: _0xE3_PickVarRandom(); break;
 	case 0xE4: _0xE4_SetBoxSet(); break;
+	case 0xE9: _0xE9_SeekFilePos(); break;
+	case 0xEA: _0xEA_RedimArray(); break;
 	case 0xEE: _0xEE_GetStringLength(); break;
+	case 0xEF: _0xEF_AppendString(); break;
+	case 0xF1: _0xF1_CompareString(); break;
 	case 0xF2: _0xF2_IsResourceLoaded(); break;
 	case 0xF3: _0xF3_ReadINI(); break;
 	case 0xF4: _0xF4_WriteINI(); break;
+	case 0xF6: _0xF6_GetCharIndexInString(); break;
+	case 0xF8: _0xF8_GetResourceSize(); break;
 	case 0xF9: _0xF9_CreateDirectory(); break;
 	case 0xFA: _0xFA_SetSystemMessage(); break;
 	case 0xFB: _0xFB_PolygonOps(); break;
@@ -480,9 +697,11 @@ byte fetchScriptByte() {
 	return *_scriptPointer++;
 }
 
-uint16 fetchScriptWord() {
+uint16_t fetchScriptWord() {
 	//refreshScriptPointer();
-	return (fetchScriptByte() | fetchScriptByte() << 8);
+	uint16_t a = (_scriptPointer[0] | _scriptPointer[1] << 8);
+	_scriptPointer += 2;
+	return a;
 	//uint a = *((uint16_t*)_scriptPointer);
 	//_scriptPointer += 2;
 	//return a;
@@ -492,8 +711,11 @@ int16 fetchScriptWordSigned() {
 	return (int16)fetchScriptWord();
 }
 
-uint fetchScriptDWord() {
-	return (fetchScriptByte() | (fetchScriptByte() << 8) | (fetchScriptByte() << 16) | (fetchScriptByte() << 24));
+uint32_t fetchScriptDWord() {
+	uint32_t a = (_scriptPointer[0] | _scriptPointer[1] << 8 | _scriptPointer[2] << 16 | _scriptPointer[3] << 24);
+	_scriptPointer += 4;
+	return a;
+	//return (fetchScriptByte() | (fetchScriptByte() << 8) | (fetchScriptByte() << 16) | (fetchScriptByte() << 24));
 	//refreshScriptPointer();
 	//uint a = *((uint32_t*)_scriptPointer);
 	//_scriptPointer += 4;
@@ -507,7 +729,9 @@ int fetchScriptDWordSigned() {
 int readVar(uint var) {
 	//int a;
 
-	//printf("readvar(%d)\n", var);
+	//printf("readvar(%x)\n", var);
+	//while(scanKeys(), keysHeld() == 0);
+	//swiDelay(5000000);
 
 
 	if (!(var & 0xF000)) {
@@ -559,7 +783,9 @@ int readVar(uint var) {
 }
 
 void writeVar(uint var, int value) {
-	//printf("writeVar(%d, %d)\n", var, value);
+	//printf("writeVar(%x, %d)\n", var, value);
+	//while(scanKeys(), keysHeld() == 0);
+	//swiDelay(5000000);
 
 	if (!(var & 0xF000)) {
 		//assertRange(0, var, _numVariables - 1, "variable (writing)");
@@ -703,7 +929,6 @@ void runAllScripts() {
 				getScriptBaseAddress();
 				resetScriptPointer();
 				executeScript();
-				//free((void*)_scriptOrgPointer);
 			}
 		}
 	}
@@ -758,7 +983,7 @@ void killScriptsAndResources() {
 
 	ss = vm.slot;
 	for (i = 0; i < NUM_SCRIPT_SLOT; i++, ss++) {
-		if (ss->where == WIO_ROOM || ss->where == WIO_FLOBJECT) {
+		if (ss->where == WIO_ROOM || ss->where == WIO_FLOBJECT || ss->where == 6) {
 			if (ss->cutsceneOverride) {
 				printf("Warning: Object %d stopped with active cutscene/override in exit\n", ss->number);
 				ss->cutsceneOverride = 0;
@@ -809,6 +1034,27 @@ void checkAndRunSentenceScript() {
 	_currentScript = 0xFF;
 	if (sentenceScript)
 		runScript(sentenceScript, 0, 0, localParamList);
+}
+
+void runInputScript(int clickArea, int val, int mode)
+{
+	int args[NUM_SCRIPT_LOCAL];
+	int verbScript;
+
+	verbScript = VAR(VAR_VERB_SCRIPT);
+
+	memset(args, 0, sizeof(args));
+	args[0] = clickArea;
+	args[1] = val;
+	args[2] = mode;
+	// All HE 72+ games but only some HE 71 games.
+	//if (_game.heversion >= 71) {
+		args[3] = VAR(VAR_VIRT_MOUSE_X);
+		args[4] = VAR(VAR_VIRT_MOUSE_Y);
+	//}
+
+	if (verbScript)
+		runScript(verbScript, 0, 0, args);
 }
 
 void decreaseScriptDelay(int amount) {

@@ -12,6 +12,32 @@
 #include <objects.h>
 #include <sprite.h>
 
+void appendSubstring(int dst, int src, int srcOffs, int len)
+{
+	int dstOffs, value;
+	int i = 0;
+
+	if (len == -1) {
+		len = resStrLen((byte*)_arrays[src & ~0x33539000]->data);
+		srcOffs = 0;
+	}
+
+	dstOffs = resStrLen((byte*)_arrays[dst & ~0x33539000]->data);
+
+	len -= srcOffs;
+	len++;
+
+	while (i < len) {
+		writeVar(0, src);
+		value = readArray(0, 0, srcOffs + i);
+		writeVar(0, dst);
+		writeArray(0, 0, dstOffs + i, value);
+		i++;
+	}
+
+	writeArray(0, 0, dstOffs + i, 0);
+}
+
 /*void _0xEC_CopyString()
 {
 	int dst, size;
@@ -24,6 +50,94 @@
 
 	push(dst);
 } */
+
+void _0xEF_AppendString()
+{
+	int dst, size;
+
+	int len = pop();
+	int srcOffs = pop();
+	int src = pop();
+
+	size = len - srcOffs + 2;
+	dst = setupStringArray(size);
+
+	appendSubstring(dst, src, srcOffs, len);
+
+	push(dst);
+}
+
+void _0xF1_CompareString()
+{
+	int result;
+
+	int array1 = pop();
+	int array2 = pop();
+
+	byte *string1 = (byte*)_arrays[array1 & ~0x33539000]->data;
+	if (!string1)
+		printf("Error: o71_compareString: Reference to zeroed array pointer (%d)\n", array1);
+
+	byte *string2 = (byte*)_arrays[array2 & ~0x33539000]->data;
+	if (!string2)
+		printf("Error: o71_compareString: Reference to zeroed array pointer (%d)\n", array2);
+
+	while (*string1 == *string2) {
+		if (*string2 == 0) {
+			push(0);
+			return;
+		}
+
+		string1++;
+		string2++;
+	}
+
+	result = (*string1 > *string2) ? -1 : 1;
+	push(result);
+}
+
+void _0xF6_GetCharIndexInString()
+{
+	int array, end, len, pos, value;
+
+	value = pop();
+	end = pop();
+	pos = pop();
+	array = pop();
+
+	if (end >= 0) {
+		len = resStrLen((byte*)_arrays[array & ~0x33539000]->data);
+		if (len < end)
+			end = len;
+	} else {
+		end = 0;
+	}
+
+	if (pos < 0)
+		pos = 0;
+
+	writeVar(0, array);
+	if (end > pos) {
+		while (end >= pos) {
+			if (readArray(0, 0, pos) == value) {
+				push(pos);
+				return;
+			}
+			pos++;
+		}
+	} else {
+		while (end <= pos) {
+			if (readArray(0, 0, pos) == value) {
+				push(pos);
+				return;
+			}
+			pos--;
+		}
+	}
+
+	push(-1);
+}
+ 
 
 void _0xFB_PolygonOps()
 {
@@ -48,13 +162,13 @@ void _0xFB_PolygonOps()
 		vert1x = pop();
 		flag = (subOp == 69 || subOp == 248);
 		id = pop();
-		//_wiz->polygonStore(id, flag, vert1x, vert1y, vert2x, vert2y, vert3x, vert3y, vert4x, vert4y);
+		polygonStore(id, flag, vert1x, vert1y, vert2x, vert2y, vert3x, vert3y, vert4x, vert4y);
 		break;
 	case 28: // HE 100
 	case 247:
 		toId = pop();
 		fromId = pop();
-		//_wiz->polygonErase(fromId, toId);
+		polygonErase(fromId, toId);
 		break;
 	default:
 		printf("Error: o71_polygonOps: default case %d\n", subOp);

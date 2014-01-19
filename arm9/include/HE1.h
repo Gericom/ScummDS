@@ -75,11 +75,14 @@ struct OCDH_t
 struct OBCD_t
 {
 	uint16_t ObjectId;
-	//int16_t X;
-	//int16_t Y;
-	//uint16_t Width;
-	//uint16_t Height;
+	int16_t X;
+	int16_t Y;
+	uint16_t Width;
+	uint16_t Height;
+	uint8_t Flags;
+	uint8_t Parent;
 	fpos_t OCDHOffset;
+	uint32_t VERBLength;
 	fpos_t VERBOffset;
 	fpos_t OBNAOffset;
 };

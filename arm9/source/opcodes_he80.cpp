@@ -12,6 +12,158 @@
 #include <objects.h>
 #include <sprite.h>
 
+void _0x45_CreateSound()
+{
+	byte subOp = fetchScriptByte();
+
+	switch (subOp) {
+	case 27:
+		pop();
+		//createSound(_heSndResId, pop());
+		break;
+	case 217:
+		//createSound(_heSndResId, -1);
+		break;
+	case 232:
+		pop();
+		//_heSndResId = pop();
+		break;
+	case 255:
+		// dummy case
+		break;
+	default:
+		printf("Error: o80_createSound: default case %d\n", subOp);
+	}
+}
+
+void _0x4D_ReadConfigFile()
+{
+	byte option[128], section[128], filename[256];
+	byte *data;
+	//String entry;
+	int len, r;
+
+	copyScriptString(option, sizeof(option));
+	copyScriptString(section, sizeof(section));
+	copyScriptString(filename, sizeof(filename));
+
+	r = convertFilePath(filename, sizeof(filename));
+
+	/*if (!strcmp((const char *)filename, "map (i)")) {
+		// Mac resource fork config file
+		// (as used by only mustard mac for map data?)
+		Common::MacResManager resFork;
+
+		if (!resFork.open((const char *)filename) || !resFork.hasResFork())
+			error("Could not open '%s'", filename);
+
+		Common::String prefResName = Common::String::format("Pref:%s.%s", (const char *)section, (const char *)option);
+		Common::SeekableReadStream *res = resFork.getResource(prefResName);
+
+		if (res) {
+			// The string is inside the resource as a pascal string
+			byte length = res->readByte();
+			for (byte i = 0; i < length; i++)
+				entry += (char)res->readByte();
+
+			delete res;
+		}
+	} else {
+		// Normal Windows INI files
+		Common::INIFile confFile;
+		if (!strcmp((char *)filename + r, "map.ini"))
+			confFile.loadFromFile((const char *)filename + r);
+		else
+			confFile.loadFromSaveFile((const char *)filename + r);
+
+		confFile.getKey((const char *)option, (const char *)section, entry);
+	}*/
+
+	//while(scanKeys(), keysHeld() == 0);
+	//swiDelay(5000000);
+
+	byte subOp = fetchScriptByte();
+
+	switch (subOp) {
+	case 43: // HE 100
+	case 6: // number
+		if (!strcmp((char *)option, "Benchmark")) push(2);
+		else if (!strcmp((char*)option, "_LOL-TESTextra-dog")) push(3);
+		else if (!strcmp((char*)option, "_LOL-TESTmouse-use")) push(10);
+		else
+		{
+			push(/*atoi(entry.c_str())*/0);
+			printf("o80_readConfigFile: Filename %s Section %s Option %s Value %s\n", filename, section, option, "");
+			//while(scanKeys(), keysHeld() == 0);
+			//swiDelay(5000000);
+		}
+		break;
+	case 77: // HE 100
+	case 7: // string
+		{
+			writeVar(0, 0);
+			char* ent;
+			if (!strcmp((char*)option, "_KidNames")) ent = "LOL-TEST";
+			else if (!strcmp((char*)option, "_KidNamesLOL-TESTColor")) ent = "bbbggggg";
+			else
+			{
+				ent = "";
+				printf("o80_readConfigFile: Filename %s Section %s Option %s Value %s\n", filename, section, option, ent);
+				//while(scanKeys(), keysHeld() == 0);
+				//swiDelay(5000000);
+			}
+			len = resStrLen((byte*)ent);//len = resStrLen((const byte *)entry.c_str());
+			data = defineArray(0, kStringArray, 0, 0, 0, len);
+			memcpy(data, ent, len);//memcpy(data, entry.c_str(), len);
+			push(readVar(0));
+		}
+		break;
+	default:
+		printf("Error: o80_readConfigFile: default type %d\n", subOp);
+	}
+
+	//printf("o80_readConfigFile: Filename %s Section %s Option %s Value %s\n", filename, section, option, /*entry.c_str()*/"");
+	//while(scanKeys(), keysHeld() == 0);
+	//swiDelay(5000000);
+}
+
+void _0x4E_WriteConfigFile()
+{
+	byte filename[256], section[256], option[256], string[1024];
+	int r, value;
+
+	byte subOp = fetchScriptByte();
+
+	switch (subOp) {
+	case 43: // HE 100
+	case 6: // number
+		value = pop();
+		sprintf((char *)string, "%d", value);
+		copyScriptString(option, sizeof(option));
+		copyScriptString(section, sizeof(section));
+		copyScriptString(filename, sizeof(filename));
+		break;
+	case 77: // HE 100
+	case 7: // string
+		copyScriptString(string, sizeof(string));
+		copyScriptString(option, sizeof(option));
+		copyScriptString(section, sizeof(section));
+		copyScriptString(filename, sizeof(filename));
+		break;
+	default:
+		printf("Error: o80_writeConfigFile: default type %d\n", subOp);
+	}
+
+	//r = convertFilePath(filename, sizeof(filename));
+
+	//Common::INIFile ConfFile;
+	//ConfFile.loadFromSaveFile((const char *)filename + r);
+	//ConfFile.setKey((char *)option, (char *)section, (char *)string);
+	//ConfFile.saveToSaveFile((const char *)filename + r);
+
+	printf("o80_writeConfigFile: Filename %s Section %s Option %s String %s\n", filename, section, option, string);
+} 
+
 void _0x6B_CursorCommand() {
 	int a, b, i;
 	int args[16];
@@ -83,8 +235,8 @@ void _0x70_SetState()
 	int state = pop();
 	int obj = pop();
 
-	//state &= 0x7FFF;
-	//putState(obj, state);
+	state &= 0x7FFF;
+	putState(obj, state);
 	//removeObjectFromDrawQue(obj); 
 }
 
@@ -119,7 +271,7 @@ void _0xE3_PickVarRandom()
 
 	num = readArray(value, 0, 0);
 
-	ArrayHeader *ah = _arrays[readVar(value)];//(ArrayHeader *)getResourceAddress(rtString, readVar(value));
+	ArrayHeader *ah = _arrays[readVar(value)  & ~0x33539000];//(ArrayHeader *)getResourceAddress(rtString, readVar(value));
 	dim1end = ah->dim1end;
 
 	if (dim1end < num) {

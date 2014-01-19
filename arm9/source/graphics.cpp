@@ -14,13 +14,21 @@
 
 #define READ_BIT (shift--, dataBit = data & 1, data >>= 1, dataBit)
 
-#define BUFFERSIZE (4096 * 128)
+#define BUFFERSIZE (4096 * 8)
 
 static uint8_t buffer[BUFFERSIZE];
 static int buffersize = 0;
 
 static int _decomp_shr;
 static int _decomp_mask;
+
+
+/*void debugwait()
+{
+	printf("wait\n");
+	while(scanKeys(), keysHeld() == 0);
+	swiDelay(5000000);
+}*/
 
 void FILL_BITS(FILE* handle, uint32* data, int* shift, int n)
 {
@@ -52,7 +60,7 @@ void writeRoomColor(LFLF_t* Room, byte *dst, byte color)
 	*((uint16_t*)dst) = c16;
 }
 
-void drawStripHE(FILE* handle, LFLF_t* Room, byte *dst, int dstPitch, int width, int height, const bool transpCheck)
+/*void drawStripHE(FILE* handle, LFLF_t* Room, byte *dst, int dstPitch, int width, int height, const bool transpCheck)
 {
 	static const int delta_color[] = { -4, -3, -2, -1, 1, 2, 3, 4 };
 	uint32 dataBit, data;
@@ -93,10 +101,12 @@ void drawStripHE(FILE* handle, LFLF_t* Room, byte *dst, int dstPitch, int width,
 			}
 		}
 	}
-}
+}*/
 
 void ConvertRoomBackground(FILE* handle, LFLF_t* Room)
 {
+	uint16_t* dst = &TempBuffer[0];
+
 	fseek(handle, Room->RMIM.IM.BMAP.dataOffset, SEEK_SET);
 	buffersize = 0;
 	uint8_t code;
@@ -109,34 +119,44 @@ void ConvertRoomBackground(FILE* handle, LFLF_t* Room)
 		case 136:
 		case 137:
 		case 138:
-			drawStripHE(handle, Room, (uint8_t*)&FrameBuffer[0], /*vs->pitch*/Room->RMDA->RMHD.RoomWidth * 2, Room->RMDA->RMHD.RoomWidth, Room->RMDA->RMHD.RoomHeight, false);
+			drawStripHE_asm(handle, Room, (uint8_t*)&dst[0], Room->RMDA->RMHD.RoomHeight, Room->RMDA->RMHD.RoomWidth, Room->RMDA->RMHD.RoomWidth * 2, false, _decomp_shr, _decomp_mask);
+			//drawStripHE(handle, Room, (uint8_t*)&dst[0], Room->RMDA->RMHD.RoomWidth * 2, Room->RMDA->RMHD.RoomWidth, Room->RMDA->RMHD.RoomHeight, false);
 			break;
 		case 144:
 		case 145:
 		case 146:
 		case 147:
 		case 148:
-			drawStripHE(handle, Room, (uint8_t*)&FrameBuffer[0], /*vs->pitch*/Room->RMDA->RMHD.RoomWidth * 2, Room->RMDA->RMHD.RoomWidth, Room->RMDA->RMHD.RoomHeight, true);
+			drawStripHE_asm(handle, Room, (uint8_t*)&dst[0], Room->RMDA->RMHD.RoomHeight, Room->RMDA->RMHD.RoomWidth, Room->RMDA->RMHD.RoomWidth * 2, true, _decomp_shr, _decomp_mask);
+			//drawStripHE(handle, Room, (uint8_t*)&dst[0], Room->RMDA->RMHD.RoomWidth * 2, Room->RMDA->RMHD.RoomWidth, Room->RMDA->RMHD.RoomHeight, true);
 			break;
 		case 150:
+			printf("Fill!");
+			while(1);
+			//while(scanKeys(), keysHeld() == 0);
+			//swiDelay(5000000);
 			//fill(dst, vs->pitch, *bmap_ptr, vs->w, vs->h, vs->format.bytesPerPixel);
 			break;
 	} 
+	for(int i = 0, i2 = 0; i < 480; i+=2, i2++)
+	{
+		for(int j = 0, j2 = 0; j < 640; j+=2, j2++)
+		{
+			BackgroundFrameBuffer[i2 * 320 + j2] = Merge4Pixels(dst[i * 640 + j], dst[i * 640 + j + 1], dst[(i + 1) * 640 + j], dst[(i + 1) * 640 + j + 1]);
+		}
+	}
 }
 
-void writePaletteColor(void* Palette, byte *dst, byte color)
+/*void writePaletteColor(void* Palette, byte *dst, byte color)
 {
-	uint8_t* colordata = (uint8_t*)(Palette + color * 3);// (uint8_t*)(&Room->RMDA->PALS->WRAP->APAL->data[color * 3]);
-	uint8_t r = colordata[0] >> 3;
-	uint8_t g = colordata[1] >> 3;
-	uint8_t b = colordata[2] >> 3;
-	uint16_t c16 = r | (g << 5) | (b << 10);
-	//printf("%x at 0x%x\n", color, (uint32)dst);
+	uint8_t* colordata = (uint8_t*)(Palette + color * 3);
+	uint16_t r = (colordata[0] & 0xF8) >> 3;
+	uint16_t g = (colordata[1] & 0xF8) << 2;
+	uint16_t b = (colordata[2] & 0xF8) << 7;
+	*((uint16_t*)dst) = (r | g | b);
+}*/
 
-	*((uint16_t*)dst) = c16;
-}
-
-static uint8_t linebuffer[1024];
+static uint8_t linebuffer[2048];
 
 void decompressWizImage(uint8 *dst, int dstPitch, uint32_t DataOffset, int X, int Y, int Width, int Height, void *palPtr) {
 	//const *dataPtrNext;
@@ -215,7 +235,7 @@ void decompressWizImage(uint8 *dst, int dstPitch, uint32_t DataOffset, int X, in
 					}
 					uint8_t color = *line++;
 					while (code--) {
-						writePaletteColor(palPtr, dstPtr, color);
+						writePaletteColor_asm(palPtr, dstPtr, color);
 						//write8BitColor<type>(dstPtr, dataPtr, dstType, palPtr, xmapPtr, bitDepth);
 						dstPtr += dstInc;
 					}
@@ -236,7 +256,7 @@ void decompressWizImage(uint8 *dst, int dstPitch, uint32_t DataOffset, int X, in
 					}
 					while (code--) {
 						uint8_t color = *line++;
-						writePaletteColor(palPtr, dstPtr, color);
+						writePaletteColor_asm(palPtr, dstPtr, color);
 						//write8BitColor<type>(dstPtr, dataPtr, dstType, palPtr, xmapPtr, bitDepth);
 						dstPtr += dstInc;
 					}
@@ -252,8 +272,22 @@ void ConvertWIZImage(uint32_t DataOffset, void* Palette, int X, int Y, uint32_t 
 	switch (Compression)
 	{
 		case 1:
-			decompressWizImage((uint8*)&FrameBuffers[GetFreeFrameBuffer()][0], 640 * 2, DataOffset, X, Y, Width, Height, Palette);
-			//return //ConvertWizImage(DataOffset, Palette, Width, Height);
+			{
+				uint16_t* dst = &TempBuffer[0];
+				for(int i = 0; i < 640 * 480; i++)
+				{
+					dst[i] = 0x8000;
+				}
+				decompressWizImage((uint8*)dst, 640 * 2, DataOffset, X, Y, Width, Height, Palette);
+				for(int i = 0, i2 = 0; i < 480; i+=2, i2++)
+				{
+					for(int j = 0, j2 = 0; j < 640; j+=2, j2++)
+					{
+						if(dst[i * 640 + j] != 0x8000)
+							WIZFrameBuffer[i2 * 320 + j2] = Merge4Pixels(dst[i * 640 + j], dst[i * 640 + j + 1], dst[(i + 1) * 640 + j], dst[(i + 1) * 640 + j + 1]);
+					}
+				}
+			}
 			break;
 		default:
 			break;
@@ -273,8 +307,26 @@ void ConvertWIZCursor(uint32_t DataOffset, uint8_t* Dst, void* Palette, uint32_t
 	}
 }
 
-void DecompressAKOSCodec1(uint32_t DataOffset, uint8_t* Dst, void* Palette, uint32_t PaletteLength, void* Colors, uint32_t Width, uint32_t Height)
+uint8_t readByteBuffer(/*FILE* handle, *//*uint8_t* dst*/)
+{
+		if(buffersize == 0) 
 		{
+			readBytes(/*handle*/HE1_File, &buffer[0], BUFFERSIZE);
+			buffersize = BUFFERSIZE;
+		}
+		uint8_t dst = buffer[BUFFERSIZE - buffersize];
+		buffersize--;
+		return dst;
+}
+
+void clearByteBuffer()
+{
+	buffersize = 0;
+}
+
+/*void DecompressAKOSCodec1(uint32_t DataOffset, uint8_t* Dst, void* Palette, uint32_t PaletteLength, void* Colors, uint32_t Width, uint32_t Height)
+		{
+			buffersize = 0;
 			int ColorShift;
 			byte RepeatMask;
 			if (PaletteLength == 32) ColorShift = 3;
@@ -289,13 +341,13 @@ void DecompressAKOSCodec1(uint32_t DataOffset, uint8_t* Dst, void* Palette, uint
 			while (true)
 			{
 				uint8_t d;
-				readByte(HE1_File, &d);
-				int repeat = (int)(/*Data[Offset]*/d & RepeatMask);
-				int color = (int)(/*Data[Offset++]*/d >> ColorShift);
+				d = readByteBuffer();///*HE1_File, /&d);
+				int repeat = (int)(d & RepeatMask);
+				int color = (int)(d >> ColorShift);
 				if (repeat == 0)
 				{
 					//repeat = Data[Offset++];
-					readByte(HE1_File, &d);
+					d = readByteBuffer();/*HE1_File, ///&d);
 					repeat = d;
 				}
 				for (int j = 0; j < repeat; j++)
@@ -313,13 +365,14 @@ void DecompressAKOSCodec1(uint32_t DataOffset, uint8_t* Dst, void* Palette, uint
 					}
 				}
 			}
-		}
+		}*/
 
 void ConvertAKOSFrame(uint32_t DataOffset, uint8_t* Dst, void* Palette, uint32_t PaletteLength, void* Colors, uint32_t Width, uint32_t Height, uint32_t Codec)
 {
 	switch (Codec)
 	{
-		case 1: DecompressAKOSCodec1(DataOffset, Dst, Palette, PaletteLength, Colors, Width, Height); break;
+		case 1:  DecompressAKOSCodec1_asm(Dst, Palette, Colors, Width, Height, DataOffset, PaletteLength); break;
+		//case 1: DecompressAKOSCodec1(DataOffset, Dst, Palette, PaletteLength, Colors, Width, Height); break;
 		//case 16: return DecompressAKOSCodec16(Data, Offset, Palette, Colors, Width, Height);
 		case 32: decompressWizImage(Dst, Width * 2, DataOffset, 0, 0, Width, Height, Colors); break;
 	}

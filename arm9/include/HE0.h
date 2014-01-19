@@ -2,6 +2,13 @@
 #define __HE0_H__
 #include <stdio.h>
 
+enum {
+	OF_OWNER_MASK = 0x0F,
+	OF_STATE_MASK = 0xF0,
+
+	OF_STATE_SHL = 4
+};
+
 /*typedef struct
 {
 	uint16_t NrRooms;
@@ -92,6 +99,14 @@ struct HE0_t
 	fpos_t DISK;
 	fpos_t DLFL;
 };
+
+extern uint32_t HE0_Start;
+extern uint32_t HE0_Length;
+extern uint32_t HE1_Start;
+extern uint32_t HE2_Start;
+extern uint32_t HE4_Start;
+
+extern uint32_t HE8_Start;
 
 void readHE0(FILE* handle, HE0_t* HE0);
 

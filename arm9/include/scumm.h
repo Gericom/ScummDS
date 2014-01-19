@@ -4,6 +4,8 @@
 
 #define ARRAYSIZE(x) ((int)(sizeof(x) / sizeof(x[0])))
 
+template<typename T> inline void SWAP(T &a, T &b) { T tmp = a; a = b; b = tmp; }
+
 //#define printf my_printf
 
 //void my_printf(char* a, ...);
@@ -19,7 +21,10 @@ enum WhereIsObject {
 
 extern FILE* HE0_File;
 extern FILE* HE1_File;
+extern FILE* HE2_File;
 extern FILE* HE4_File;
+
+extern FILE* HEx_File;
 
 extern HE0_t HE0_Data;
 
@@ -31,9 +36,13 @@ extern uint16_t _mouse_y;
 extern uint16_t _cursor_state;
 extern uint16_t _userPut;
 
+extern uint32_t _hInFileTable[17];
+extern uint32_t _hOutFileTable[17];
+
+extern uint16_t gameHEVersion;
+
 int getMillis();
 int getHETimer(int timer);
 void setHETimer(int timer);
-
 
 #endif

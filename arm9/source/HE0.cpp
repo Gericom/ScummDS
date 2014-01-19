@@ -8,16 +8,27 @@
 
 #include <HE0.h>
 #include <ioutil.h>
+#include <objects.h>
 
-#define HE1_Start 0//0xE5B0//sam2demo, otherwise 0
+uint32_t HE0_Start = 0;
+uint32_t HE0_Length = 0;
+uint32_t HE1_Start = 0;
+uint32_t HE2_Start = 0;
+uint32_t HE4_Start = 0;
+
+uint32_t HE8_Start = 0;
 
 void readHE0(FILE* handle, HE0_t* HE0)
 {
+	printf("Offset: %x\n", HE0_Start);
+	fseek(handle, HE0_Start, SEEK_SET);
 	uint32_t sig;
 	uint32_t size;
 	uint16_t a;
+
+	fpos_t pos = 0;
 	//HE0_t* HE0 = (HE0_t*)malloc(sizeof(HE0_t));
-	while(readU32LE(handle, &sig))
+	while(readU32LE(handle, &sig) && pos < (HE0_Length + HE0_Start))
 	{
 		//printf((char*)&sig, 4);
 		//printf("\n");
@@ -27,6 +38,15 @@ void readHE0(FILE* handle, HE0_t* HE0)
 		{
 		case MKTAG('M', 'A', 'X', 'S'):
 			fgetpos(handle, &HE0->MAXS);
+			/*fseek(handle, 0x1C, SEEK_CUR);
+			uint16_t obj;
+			readU16LE(handle, &obj);
+			_numGlobalObjects = obj;
+			_objectOwnerTable = (uint8_t*)calloc(_numGlobalObjects, 1);
+			_objectStateTable = (uint8_t*)calloc(_numGlobalObjects, 1);
+			_objectRoomTable = (uint8_t*)calloc(_numGlobalObjects, 1);
+			_classData = (uint32_t*)calloc(_numGlobalObjects, 4);
+			fseek(handle, HE0->MAXS, SEEK_SET);*/
 			fseek(handle, SWAP_CONSTANT_32(size) - 8, SEEK_CUR);
 			break;
 		case MKTAG('D', 'I', 'R', 'I'):
@@ -69,11 +89,25 @@ void readHE0(FILE* handle, HE0_t* HE0)
 			fgetpos(handle, &HE0->DLFL);
 			fseek(handle, SWAP_CONSTANT_32(size) - 8, SEEK_CUR);
 			break;
+		case MKTAG('D', 'O', 'B', 'J'):
+			uint16_t num;
+			readU16LE(handle, &num);
+			_numGlobalObjects = num;
+			_objectOwnerTable = (uint8_t*)calloc(_numGlobalObjects, 1);
+			_objectStateTable = (uint8_t*)calloc(_numGlobalObjects, 1);
+			_objectRoomTable = (uint8_t*)calloc(_numGlobalObjects, 1);
+			_classData = (uint32_t*)calloc(_numGlobalObjects, 4);
+			readBytes(handle, &_objectStateTable[0], num);
+			readBytes(handle, &_objectOwnerTable[0], num);
+			readBytes(handle, &_objectRoomTable[0], num);
+			readU32sLE(handle, &_classData[0], num);
+			break;
 		default:
 			printf("Unknown Signature\n");
 			fseek(handle, SWAP_CONSTANT_32(size) - 8, SEEK_CUR);
 			break;
 		}
+		fgetpos(handle, &pos);
 	}
 	//return HE0;
 }

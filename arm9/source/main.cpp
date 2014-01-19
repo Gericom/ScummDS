@@ -1,5 +1,6 @@
 #include <nds.h>
 #include <fat.h>
+#include <maxmod9.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,6 +17,13 @@
 #include <sounds.h>
 #include <actor.h>
 #include <resources.h>
+#include <objects.h>
+#include <opcodes.h>
+#include <verbs.h>
+
+#include <sound_io.h>
+
+#include <HEP.h>
 
 void waitForTimer(int msec_delay) {
 	uint32 start_time;
@@ -38,6 +46,8 @@ void waitForTimer(int msec_delay) {
 	}
 }
 
+static int lastpressed = 0;
+
 void processInput()
 {
 	touchPosition touch;
@@ -48,30 +58,37 @@ void processInput()
 
 	if(pressed & KEY_R) abortCutscene();
 
-	if(pressed & KEY_TOUCH)
+	if(lastpressed & KEY_TOUCH && !(pressed & KEY_TOUCH) && !(held & KEY_TOUCH))
 	{ 
 		VAR(VAR_LEFTBTN_HOLD) = 1;
 		printf("Left Mouse!\n");
 	}
 	else VAR(VAR_LEFTBTN_HOLD) = 0;
+
+	lastpressed = pressed;
+
 	if (!(held & KEY_TOUCH) || touch.rawx == 0 || touch.rawy == 0) return;
 	_mouse_x = touch.px * 2.5;
 	_mouse_y = touch.py * 2.5;
 }
 
-//const char* he = "/scumm/PJS2DEMO.HE";
+//const char* hep = "/scumm/PJS2DEMO.hep";
 
-const char* he0 = "/scumm/PJS2DEMO.HE0";
-const char* he1 = "/scumm/PJS2DEMO.(A)";
+//const char* he0 = "/scumm/PJS2DEMO.HE0";
+//const char* he1 = "/scumm/PJS2DEMO.(A)";
 //const char* he4 = "/scumm/PJS2DEMO.HE4";
+
+//const char* hep = "/scumm/F4-DEMO.hep";
 
 //const char* he0 = "/scumm/F4-DEMO.HE0";
 //const char* he1 = "/scumm/F4-DEMO.(A)";
 
+//const char* hep = "/scumm/SokkenSoep.hep";
+
 //const char* he0 = "/scumm/SokkenSoep.HE0";
 //const char* he1 = "/scumm/SokkenSoep.(a)";
 
-//const char* he = "/scumm/DOOLHOF.HE";
+const char* hep = "/scumm/DOOLHOF.hep";
 
 //const char* he0 = "/scumm/DOOLHOF.HE0";
 //const char* he1 = "/scumm/DOOLHOF.(A)";
@@ -79,14 +96,22 @@ const char* he1 = "/scumm/PJS2DEMO.(A)";
 //const char* he0 = "/scumm/ZOODEMO.HE0";//op
 //const char* he1 = "/scumm/ZOODEMO.HE1";
 
+//const char* hep = "/scumm/SPYDEMO.hep";
+
 //const char* he0 = "/scumm/SPYDEMO.HE0";
 //const char* he1 = "/scumm/SPYDEMO.(A)";
+
+//const char* hep = "/scumm/sf2demo.hep";
 
 //const char* he0 = "/scumm/sf2demo.he0";
 //const char* he1 = "/scumm/sf2demo.(a)";
 
+//const char* hep = "/scumm/PAJAMA.hep";
+
 //const char* he0 = "/scumm/sam/PAJAMA.HE0";
 //const char* he1 = "/scumm/sam/PAJAMA.HE1";
+
+//const char* hep = "/scumm/PAJAMA2.hep";
 
 //const char* he0 = "/scumm/sam2/PAJAMA2.HE0";//op
 //const char* he1 = "/scumm/sam2/PAJAMA2.(A)";
@@ -94,18 +119,43 @@ const char* he1 = "/scumm/PJS2DEMO.(A)";
 //const char* he0 = "/scumm/spy1/SPYFox.HE0";
 //const char* he1 = "/scumm/spy1/SPYFox.(A)";
 
+//const char* hep = "/scumm/pj3demo.hep";
+
 //const char* he0 = "/scumm/pj3demo.he0";
 //const char* he1 = "/scumm/pj3demo.(a)";
 
+//const char* hep = "/scumm/Pajama3.hep";
+
+//const char* hep = "/scumm/SPYFox.hep";
+
+//const char* hep = "/scumm/Spyfox2.hep";
+
+//const char* hep = "/scumm/PUTTTIJD.hep";
+
+//const char* hep = "/scumm/FREDDI4.hep";
+
+//static int framenr = 0;
 
 int main()
 {
-	//defaultExceptionHandler();
+	defaultExceptionHandler();
 	consoleDemoInit();
 	lcdMainOnBottom(); 
 	TIMER0_CR = TIMER_ENABLE|TIMER_DIV_1024;
 	TIMER1_CR = TIMER_ENABLE|TIMER_CASCADE;
-	//soundEnable();
+
+	soundIO_InstallFIFO();
+	soundIO_Enable();
+
+/*	mm_ds_system sys;
+	sys.mod_count 			= 0;
+	sys.samp_count			= 0;
+	sys.mem_bank			= 0;
+	sys.fifo_channel		= FIFO_MAXMOD;
+	mmInit( &sys ); */
+
+	//irqInit();
+	
 	glInit();
 	videoSetMode(MODE_0_3D);
 	glEnable(GL_TEXTURE_2D);
@@ -132,7 +182,18 @@ int main()
 	}
 	printf("Done!\n");
 
-	printf("Loading HE0...");
+	printf("Loading HEP...");
+	FILE* HEP_F = fopen(hep, "rb");
+	if(HEP_F == NULL)
+	{
+		printf("Failed!\n");
+		return 1;
+	}
+	printf("Done!\n");
+	readHEP(HEP_F);
+	readHE0(HE0_File, &HE0_Data);
+
+	/*printf("Loading HE0...");
 	HE0_File = fopen(he0, "rb");
 	if(HE0_File == NULL)
 	{
@@ -149,7 +210,7 @@ int main()
 		printf("Failed!\n");
 		return 1;
 	}
-	printf("Done!\n");
+	printf("Done!\n");*/
 
 	/*printf("Loading HE...");
 	HE0_File = fopen(he, "rb");
@@ -204,22 +265,19 @@ int main()
 
 	VAR(VAR_PLATFORM) = 1;
 
+	// Array 132 is set to game path
+	defineArray(132, kStringArray, 0, 0, 0, 0);
+
 	//malloc(512);
 	//malloc(512);
 	//malloc(512);
 
 	//Execution Starts Here!
 	runScript(1, 0, 0, NULL, 0);
-
 	int diff = 0;
 	while(1)
 	{
-		/*for(int i = 0; i < mallocsoffset; i++)
-		{
-			free(mallocs[i]);
-			mallocs[i] = NULL;
-		}
-		mallocsoffset = 0;*/
+		rand();
 		//printf("Refresh!\n");
 		VAR(VAR_TIMER) = diff * 60 / 1000; 
 		//VAR(VAR_TIMER_TOTAL) += diff * 60 / 1000;
@@ -262,16 +320,15 @@ int main()
 
 		//((SoundHE *)_sound)->processSoundCode();
 		runAllScripts();
-		//checkExecVerbs();
+		checkExecVerbs();
 		checkAndRunSentenceScript();
-
 		//if (shouldQuit())
 		//	return;
 
 		if (_currentRoom == 0) {}
 		else 
 		{
-			glMatrixMode(GL_MODELVIEW);
+			/*glMatrixMode(GL_MODELVIEW);
 			glPolyFmt(POLY_ALPHA(31) | POLY_CULL_NONE);
 			glLoadIdentity();
 
@@ -289,10 +346,34 @@ int main()
 			glTexCoord2t16(0, 240 * 16);
 			glVertex3v16(0, 192, -7 * 4096);
 			glEnd();
-			glFlush(GL_TRANS_MANUALSORT);
+			glFlush(GL_TRANS_MANUALSORT);*/
+
+				glMatrixMode(GL_MODELVIEW);
+				glPolyFmt(POLY_ALPHA(31) | POLY_CULL_NONE);
+				glLoadIdentity();
+
+				glBindTexture(0, textureID);
+				RenderFrame();//textureID, true);
+
+				glColor3b(255, 255, 255);
+				glBegin(GL_QUAD);
+				glTexCoord2t16(0, 0);
+				glVertex3v16(0, 0, -7 * 4096);
+				glTexCoord2t16(320 * 16, 0);
+				glVertex3v16(256, 0, -7 * 4096);
+				glTexCoord2t16(320 * 16, 240 * 16);
+				glVertex3v16(256, 192, -7 * 4096);
+				glTexCoord2t16(0, 240 * 16);
+				glVertex3v16(0, 192, -7 * 4096);
+				glEnd();
+				glFlush(GL_TRANS_MANUALSORT);
+
+				//framenr++;
+
 		}
 
 		doSound();
+		//ReadStream();
 
 		//camera._last = camera._cur;
 
