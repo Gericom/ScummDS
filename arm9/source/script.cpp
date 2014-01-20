@@ -15,6 +15,7 @@
 #include <opcodes.h>
 #include <actor.h>
 #include <ioutil.h>
+#include <sound_io.h>
 
 uint32_t _numGlobalScripts;
 VirtualMachineState vm;
@@ -509,6 +510,7 @@ void refreshScriptPointer() {
 
 /** Execute a script - Read opcode, and execute it from the table */
 void executeScript() {
+	soundIO_FillStreamBuffers();//Update the sound stream here just to make sure the sound will continue to play correctly. When the frames (all frames!) render < 4 seconds for sure, this can be removed.
 	//int c;
 	while (_currentScript != 0xFF) {
 
@@ -644,6 +646,7 @@ inline void executeOpcode(byte i)
 	case 0xB8: _0xB8_PrintActor(); break;
 	case 0xB9: _0xB9_PrintEgo(); break;
 	case 0xBA: _0xBA_TalkActor(); break;
+	case 0xBB: _0xBB_TalkEgo(); break;
 	case 0xBC: _0xBC_DimArray(); break;
 	case 0xBD: _0xBD_StopObjectCode(); break;
 	case 0xBF: _0xBF_StartScriptQuick2(); break;
@@ -684,6 +687,7 @@ inline void executeOpcode(byte i)
 	case 0xF9: _0xF9_CreateDirectory(); break;
 	case 0xFA: _0xFA_SetSystemMessage(); break;
 	case 0xFB: _0xFB_PolygonOps(); break;
+	case 0xFC: _0xFC_PolygonHit(); break;
 	default:
 		printf("Script %d, offset 0x%x: [%X]\n", vm.slot[_currentScript].number, (uint)(_scriptPointer - _scriptOrgPointer) - 1, _opcode);
 		printf("Unknown Opcode\n");

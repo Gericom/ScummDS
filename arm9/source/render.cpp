@@ -21,7 +21,7 @@ static bool done = false;
 
 void InitFrameBuffers()
 {
-	for(int j = 0; j < 640 * 480; j++)
+	for(int j = 0; j < 320 * 240; j++)
 	{
 		WIZFrameBuffer[j] = 0x8000;
 	}

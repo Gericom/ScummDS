@@ -16,7 +16,8 @@ The games listed here do NOT run fully correctly (since the interpreter is just 
 * <b>Pajama Sam</b> (Dutch)
 * <b>Pajama Sam 2</b> (Dutch) - Skip the intro cut-scene for better results
 * <b>Pajama Sam 2 Demo</b> (Dutch)
-* <b>Pajama Sam's Sock Works</b> (Dutch, Pajama Sam Sokkensoep)
+* <b>Pajama Sam's Sock Works</b> (Dutch, Pajama Sam Sokkensoep) - HE7 file is not supported yet, so it will force-close when it tries to read it, and it fails
+* <b>Spy Fox 1 Demo</b> (Dutch)
 
 <h3>Usage</h3>
 Use <a href="https://github.com/Gericom/HEPacker">HEPacker</a> to pack your game and change the path in arm9/source/main.cpp. After that, just compile and run on your ds.

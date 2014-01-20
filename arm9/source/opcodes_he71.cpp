@@ -174,3 +174,10 @@ void _0xFB_PolygonOps()
 		printf("Error: o71_polygonOps: default case %d\n", subOp);
 	} 
 }
+
+void _0xFC_PolygonHit()
+{
+	int y = pop();
+	int x = pop();
+	push(polygonHit(0, x, y));
+} 

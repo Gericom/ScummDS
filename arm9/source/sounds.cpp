@@ -134,7 +134,7 @@ digi:
 		}
 #endif
 		*length = SWAP_CONSTANT_32(size) - 8;
-	//	printf("Sound: OK\n");
+		//	printf("Sound: OK\n");
 		return data;
 	}
 	else if(sig == MKTAG('S', 'O', 'U', 'N'))
@@ -233,20 +233,20 @@ void RefreshStream()
 	streamoffs += 11025;*/
 }
 
-void ReadStream()
+/*void ReadStream()
 {
-	if(!Streaming || !need) return;
-	fseek(HE4_File, streamoffs, SEEK_SET);
-	readSoundBytes(HE4_File, &streambufferA[0], 11017);
-	if(!started)
-	{
-		soundEnable();
-		CurrentPlayingSounds[streamslot]->soundid = soundPlaySample(streambufferA, SoundFormat_8Bit, 11017, 11025, 127, 64, true, 0);
-		started = true;
-	}
-	streamoffs += 11017;
-	need = false;
+if(!Streaming || !need) return;
+fseek(HE4_File, streamoffs, SEEK_SET);
+readSoundBytes(HE4_File, &streambufferA[0], 11017);
+if(!started)
+{
+soundEnable();
+CurrentPlayingSounds[streamslot]->soundid = soundPlaySample(streambufferA, SoundFormat_8Bit, 11017, 11025, 127, 64, true, 0);
+started = true;
 }
+streamoffs += 11017;
+need = false;
+}*/
 
 void doSound()
 {
@@ -378,6 +378,7 @@ void doSound()
 							//soundEnable();
 							//CurrentPlayingSounds[slot]->soundid = soundPlaySample(streambufferA, SoundFormat_8Bit, 11025, rate, 127, 64, true, 0);
 							//timerStart(2, ClockDivider_1024, TIMER_FREQ_1024(1), RefreshStream);
+							soundIO_StartStream(slot, HE4_File, dataoffset, SoundFormat_8Bit, rate, 127, 64, false, 0);
 
 							CurrentPlayingSounds[slot]->starttime = getMillis();
 							CurrentPlayingSounds[slot]->endtime = CurrentPlayingSounds[slot]->starttime + (length * 1000) / rate;
@@ -434,6 +435,27 @@ void doSound()
 
 void stopSound(int id)
 {
+	if (id == 10000)
+	{
+		for(int i = 0; i < 16; i++)
+		{
+			if(CurrentPlayingSounds[i] != NULL)
+			{
+				if(CurrentPlayingSounds[i]->sound >= 8000)
+				{
+#ifndef NOSOUND
+					//if(!CurrentPlayingSounds[i]->streaming)
+					//soundKill(CurrentPlayingSounds[i]->soundid);
+					soundIO_StopSound(CurrentPlayingSounds[i]->soundid);
+					free(CurrentPlayingSounds[i]->data);
+#endif
+					free(CurrentPlayingSounds[i]);
+					CurrentPlayingSounds[i] = NULL;
+				}
+			}
+		}
+		return;
+	}
 	for(int i = 0; i < 16; i++)
 	{
 		if(CurrentPlayingSounds[i] != NULL)
@@ -455,7 +477,27 @@ void stopSound(int id)
 
 int isSoundRunning(int id)
 {
-	if(id >= getSoundCount(HE0_File, &HE0_Data)) return 1;
+	//printf("isSoundRunning %d\n", id);
+	//if(id >= getSoundCount(HE0_File, &HE0_Data)) return 1;
+	if (id == 10000)
+	{
+		for(int i = 0; i < 16; i++)
+		{
+			if(CurrentPlayingSounds[i] != NULL)
+			{
+				if(CurrentPlayingSounds[i]->sound >= 8000)
+				{
+					if(CurrentPlayingSounds[i]->endtime <= getMillis()) return 0;
+					else return 1;
+				}
+			}
+		}
+		for (int i = 0; i <_soundQue2Pos; i++) 
+		{
+			if(_soundQue2[i].sound >= 8000) return 1;
+		}
+		return 0;
+	}
 	for(int i = 0; i < 16; i++)
 	{
 		if(CurrentPlayingSounds[i] != NULL)

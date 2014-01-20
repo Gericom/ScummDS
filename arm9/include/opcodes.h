@@ -137,6 +137,7 @@ void _0xB7_PrintSystem();
 void _0xB8_PrintActor();
 void _0xB9_PrintEgo();
 void _0xBA_TalkActor();
+void _0xBB_TalkEgo();
 void _0xBC_DimArray();
 void _0xBD_StopObjectCode();
 void _0xBF_StartScriptQuick2();
@@ -177,5 +178,6 @@ void _0xF8_GetResourceSize();
 void _0xF9_CreateDirectory();
 void _0xFA_SetSystemMessage();
 void _0xFB_PolygonOps();
+void _0xFC_PolygonHit();
 
 #endif

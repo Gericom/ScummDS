@@ -373,6 +373,7 @@ int main()
 		}
 
 		doSound();
+		soundIO_FillStreamBuffers();
 		//ReadStream();
 
 		//camera._last = camera._cur;

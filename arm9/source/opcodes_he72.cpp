@@ -711,6 +711,12 @@ void _0xBA_TalkActor()
 	_scriptPointer += resStrLen(_scriptPointer) + 1;
 }
 
+void _0xBB_TalkEgo()
+{
+	push(VAR(VAR_EGO));
+	_0xBA_TalkActor();
+} 
+
 void _0xBC_DimArray()
 {
 	int data;

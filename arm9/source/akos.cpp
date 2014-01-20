@@ -1524,7 +1524,7 @@ _0xC020:
 								{
 									if((j * 2) + x >= 640) break;
 									if(dst[i * 2 * width + j * 2] != 0x8000)
-										ResultFrameBuffer[(y / 2 + i) * 512 + x / 2 + j] = Merge4Pixels(dst[i * 2 * width + j * 2], dst[i * 2 * width + j * 2 + 1], dst[(i * 2 + 1) * width + j * 2], dst[(i * 2 + 1) * width + j * 2 + 1]);//dst[i * 2 * width + j * 2];//0x001F;
+										ResultFrameBuffer[(y / 2 + i) * 512 + x / 2 + j] = Merge4Pixels(dst[i * 2 * width + j * 2], dst[i * 2 * width + j * 2 + 1], dst[(i * 2 + 1) * width + j * 2], dst[(i * 2 + 1) * width + j * 2 + 1]);
 								}
 							}
 						}

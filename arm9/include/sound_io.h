@@ -47,6 +47,8 @@ void soundIO_Disable();
 void soundIO_Enable();
 void soundIO_PlaySound(int channel, void* data, SoundFormat format, u32 dataSize, u16 freq, u8 volume, u8 pan, bool loop, u16 loopPoint);
 void soundIO_StopSound(int channel);
+void soundIO_StartStream(int channel, FILE* handle, uint32_t offset, SoundFormat format, u16 freq, u8 volume, u8 pan, bool loop, u16 loopPoint);
+void soundIO_FillStreamBuffers();
 void soundIO_InstallFIFO();
 
 #endif
