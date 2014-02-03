@@ -58,11 +58,11 @@ void initActor(Actor* a, int mode)
 		a->_walkbox = 0;
 		a->_animProgress = 0;
 		a->_drawToBackBuf = false;
-		//memset(_animVariable, 0, sizeof(_animVariable));
-		//memset(_palette, 0, sizeof(_palette));
-		//memset(_sound, 0, sizeof(_sound));
-		//memset(&_cost, 0, sizeof(CostumeData));
-		//memset(&_walkdata, 0, sizeof(ActorWalkData));
+		memset(a->_animVariable, 0, sizeof(a->_animVariable));
+		memset(a->_palette, 0, sizeof(a->_palette));
+		memset(a->_sound, 0, sizeof(a->_sound));
+		memset(&a->_cost, 0, sizeof(CostumeData));
+		//memset(&a->_walkdata, 0, sizeof(ActorWalkData));
 		//_walkdata.point3.x = 32000;
 		a->_walkScript = 0;
 	}
@@ -83,7 +83,7 @@ void initActor(Actor* a, int mode)
 	a->_talkPosY = -80;
 	a->_boxscale = a->_scaley = a->_scalex = 0xFF;
 	a->_charset = 0;
-	//memset(_sound, 0, sizeof(_sound));
+	memset(a->_sound, 0, sizeof(a->_sound));
 	a->_targetFacing = a->_facing;
 
 	a->_shadowMode = 0;
@@ -118,7 +118,7 @@ void initActor(Actor* a, int mode)
 	if (mode == -1) {
 		a->_heOffsX = a->_heOffsY = 0;
 		a->_heSkipLimbs = false;
-		//memset(_heTalkQueue, 0, sizeof(_heTalkQueue));
+		memset(a->_heTalkQueue, 0, sizeof(a->_heTalkQueue));
 	}
 
 	if (mode == 1 || mode == -1) {
@@ -334,7 +334,7 @@ void setActorCostume(Actor* a, int c) {
 
 	a->_costumeNeedsInit = true;
 
-	//memset(_animVariable, 0, sizeof(_animVariable));
+	memset(a->_animVariable, 0, sizeof(a->_animVariable));
 
 	a->_costume = c;
 	a->_cost.reset();
@@ -605,4 +605,37 @@ void drawActorToBackBuf(Actor* a, int x, int y)
 	//	a->_top = curTop;
 	//if (a->_bottom < curBottom)
 	//	a->_bottom = curBottom;
+}
+
+void remapActorPaletteColor(Actor* a, int color, int new_color)
+{
+	const byte *akpl;
+	int akpl_size, i;
+	byte akpl_color;
+
+	if(a->_cost.AKOS == NULL) return;
+
+	/*akos = _vm->getResourceAddress(rtCostume, _costume);
+	if (!akos) {
+		debugC(DEBUG_ACTORS, "Actor::remapActorPaletteColor: Can't remap actor %d, costume %d not found", _number, _costume);
+		return;
+	}
+
+	akpl = _vm->findResourceData(MKTAG('A','K','P','L'), akos);
+	if (!akpl) {
+		debugC(DEBUG_ACTORS, "Actor::remapActorPaletteColor: Can't remap actor %d, costume %d doesn't contain an AKPL block", _number, _costume);
+		return;
+	}*/
+
+	// Get the number palette entries
+	akpl_size = a->_cost.AKOS->AKPLLength;
+	akpl = &a->_cost.AKOS->AKPL[0];
+
+	for (i = 0; i < akpl_size; i++) {
+		akpl_color = *akpl++;
+		if (akpl_color == color) {
+			a->_palette[i] = new_color;
+			return;
+		}
+	}
 }

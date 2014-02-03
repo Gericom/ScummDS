@@ -221,6 +221,7 @@ void hideActor(Actor* a);
 void showActor(Actor* a);
 void showActors();
 void drawActorToBackBuf(Actor* a, int x, int y);
+void remapActorPaletteColor(Actor* a, int color, int new_color);
 
 
 #endif

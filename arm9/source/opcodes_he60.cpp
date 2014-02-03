@@ -21,21 +21,18 @@ void _0xD9_CloseFile()
 {
 	int slot = pop();
 	printf("CloseFile (%d)\n", slot);
-	/*if (0 <= slot && slot < 17) {
+	if (0 <= slot && slot < 17) {
 		if (_hOutFileTable[slot]) {
-			_hOutFileTable[slot]->finalize();
-			delete _hOutFileTable[slot];
 			_hOutFileTable[slot] = 0;
 		}
-
-		delete _hInFileTable[slot];
 		_hInFileTable[slot] = 0;
-	} */
+	}
 }
 
 void _0xE2_LocalizeArrayToScript()
 {
 	int slot = pop();
+	printf("localizeArray (%d)\n", slot);
 	//localizeArray(slot, _currentScript);
 }
 

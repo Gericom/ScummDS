@@ -1,8 +1,8 @@
 .global Merge4Pixels
 Merge4Pixels:
-	push {r4-lr}
+	push {r4-r7}
 
-@((((a) ^ (b)) & 0x7BDE) >> 1) + ((a) & (b))
+@(((a ^ b) & 0x7BDE) >> 1) + (a & b)
 
 	ldr r7,= 0x7BDE
 
@@ -22,18 +22,18 @@ Merge4Pixels:
 	and r5, r4, r6
 	add r0, r5, r0, lsr #1
 
-	pop {r4-lr}
+	pop {r4-r7}
 	bx lr
 
 .extern readByte
 .extern readU24LE
 
 .extern writeRoomColor
-.extern FILL_BITS
+.extern FILL_BITS_he
 
 @.extern debugwait
 
-@void drawStripHE_asm(FILE* handle, LFLF_t* Room, byte *dst, int height, int width, int dstPitch, bool transpCheck, int _decomp_shr, int _decomp_mask)
+@void drawStripHE_asm(FILE* handle, LFLF_t* Room, byte *dst, int height, int width, int dstPitch, int transpColor, int _decomp_shr, int _decomp_mask)
 @r0 = r4 = FILE* handle
 @r1 = r5 = LFLF_t* Room
 @r2 = r6 = byte *dst
@@ -46,7 +46,7 @@ var_data			= 4 * -1 + 12
 
 var_width			= 4 * 9 + 12
 var_dstPitch		= 4 * 10 + 12
-var_transpCheck		= 4 * 11 + 12
+var_transpColor		= 4 * 11 + 12
 var_decomp_shr		= 4 * 12 + 12
 var_decomp_mask		= 4 * 13 + 12
 	push {r4-r11, lr}
@@ -77,7 +77,9 @@ drawStripHE_loop:								@while (1) {
 	mov r0, r5
 	mov r1, r6
 	ldrb r2, [sp, #var_color]
-	bl writeRoomColor				@	writeRoomColor(Room, dst, color);
+	ldr r3, [sp, #var_transpColor]
+	cmp r2, r3
+	blne writeRoomColor				@	writeRoomColor(Room, dst, color);
 
 	add	r6, r6, #2					@	dst += 2;
 
@@ -94,12 +96,12 @@ drawStripHE_loop:								@while (1) {
 	popeq {r4-r11, pc}				@			return;
 									@	}
 drawStripHE_non_zero:
-	mov r0, r4
-	add r1, sp, #var_data
+	@mov r0, r4
+	add r0, sp, #var_data
 	str r8, [sp, #var_shift]
-	add r2, sp, #var_shift
-	mov r3, #1
-	bl FILL_BITS					@	FILL_BITS(handle, &data, &shift, 1);
+	add r1, sp, #var_shift
+	mov r2, #1
+	bl FILL_BITS_he					@	FILL_BITS(&data, &shift, 1);
 	ldr r8, [sp, #var_shift]
 
 @READ_BIT start
@@ -113,12 +115,12 @@ drawStripHE_non_zero:
 	str r1, [sp, #var_data]
 @READ_BIT end						@	if (READ_BIT)
 	beq drawStripHE_loop			@	{
-	mov r0, r4
-	add r1, sp, #var_data
+	@mov r0, r4
+	add r0, sp, #var_data
 	str r8, [sp, #var_shift]
-	add r2, sp, #var_shift
-	mov r3, #1
-	bl FILL_BITS					@		FILL_BITS(handle, &data, &shift, 1);
+	add r1, sp, #var_shift
+	mov r2, #1
+	bl FILL_BITS_he					@		FILL_BITS(&data, &shift, 1);
 	ldr r8, [sp, #var_shift]
 
 @READ_BIT start
@@ -133,12 +135,12 @@ drawStripHE_non_zero:
 @READ_BIT end						@		if (READ_BIT)
 	beq drawStripHE_use_decomp		@		{
 						
-	mov r0, r4
-	add r1, sp, #var_data
+	@mov r0, r4
+	add r0, sp, #var_data
 	str r8, [sp, #var_shift]
-	add r2, sp, #var_shift
-	mov r3, #3
-	bl FILL_BITS					@			FILL_BITS(handle, &data, &shift, 3);
+	add r1, sp, #var_shift
+	mov r2, #3
+	bl FILL_BITS_he					@			FILL_BITS(&data, &shift, 3);
 	ldr r8, [sp, #var_shift]
 
 	ldrb r0, [sp, #var_color]
@@ -156,13 +158,13 @@ drawStripHE_non_zero:
 	str r2, [sp, #var_data]			@			data >>= 3;
 	b drawStripHE_loop				@		}
 drawStripHE_use_decomp:				@		else {
-	mov r0, r4
-	add r1, sp, #var_data
+	@mov r0, r4
+	add r0, sp, #var_data
 	str r8, [sp, #var_shift]
-	add r2, sp, #var_shift
+	add r1, sp, #var_shift
 	ldr r10, [sp, #var_decomp_shr]
-	mov r3, r10
-	bl FILL_BITS					@			FILL_BITS(handle, &data, &shift, _decomp_shr);
+	mov r2, r10
+	bl FILL_BITS_he					@			FILL_BITS(&data, &shift, _decomp_shr);
 	ldr r8, [sp, #var_shift]
 
 	ldr r1, [sp, #var_data]
@@ -229,7 +231,7 @@ var_palettelength	= 4 * 11 + 4
 	mov r6, r2
 	mov r7, r3
 
-	bl clearByteBuffer				@buffersize = 0;
+	@bl clearByteBuffer				@buffersize = 0;
 
 	ldr r0, [sp, #var_palettelength]
 	cmp r0, #32						@if (PaletteLength == 32)
@@ -240,10 +242,11 @@ var_palettelength	= 4 * 11 + 4
 	beq AKOSCodec1_cont
 	mov r8, #4						@else ColorShift = 4;
 AKOSCodec1_cont:
-	mov r0, #0xFF
-	lsr r0, r0, r8
-	mvn r9, r0, lsl r8				@RepeatMask = (byte)~((0xFF >> ColorShift) << ColorShift);
-	str r9, [sp, #var_mask]
+	@mov r0, #0xFF
+	@lsr r0, r0, r8
+	@mvn r9, r0, lsl r8				@RepeatMask = (byte)~((0xFF >> ColorShift) << ColorShift);
+	
+	@str r9, [sp, #var_mask]
 
 	ldr r9, [sp, #var_height]
 
@@ -257,30 +260,42 @@ AKOSCodec1_cont:
 	mov r11, #0						@y = 0;
 AKOSCodec1_loop:					@while (true) {
 	bl readByteBuffer				@	readByteBuffer(HE1_File, &d);
-	ldrb r1, [sp, #var_mask]
+	@ldrb r1, [sp, #var_mask]
+	mov r1, #1
+	rsb r1, r1, r1, lsl r8
 	ands r2, r0, r1					@	repeat = d & RepeatMask;
 	lsr r3, r0, r8					@	color = d >> ColorShift;
-	bne AKOSCodec1_rep				@	if (repeat == 0) {
+	bne AKOSCodec1_col				@	if (repeat == 0) {
 	push {r3}
 	bl readByteBuffer				@		readByteBuffer(HE1_File, &d);
 	pop {r3}
 	mov r2, r0						@		repeat = d;
-AKOSCodec1_rep:						@	}
-									@	for (int j = 0; j < repeat; j++) {
-	cmp r3, #0						@		if (color != 0)
-	beq AKOSCodec1_nocol
-	mov r0, r6
-	lsl r1, r7, #1
-	mla r1, r11, r1, r4
-	add r1, r1, r10, lsl #1
-	push {r2, r3}
-	ldrb r2, [r5, r3]
-	bl writePaletteColor_asm		@			writePaletteColor_asm(Colors, Dst + (y * Width * 2 + x * 2), ((uint8_t*)Palette)[color]);
-	pop {r2, r3}
-AKOSCodec1_nocol:
+AKOSCodec1_col:						@	}
+	cmp r3, #0
+	moveq r3, #0x8000
+	beq AKOSCodec1_rep
+	ldrb r1, [r5, r3] 
+	add r1, r1, r1, lsl #1
+	add r0, r6, r1
+	ldrb r1, [r0, #0]
+	ldrb r12, [r0, #1]
+	ldrb r0, [r0, #2]
+	mov r3, r1, lsr #3
+	mov r12, r12, lsr #3
+	mov r0, r0, lsr #3
+	orr r3, r3, r12, lsl #5
+	orr r3, r3, r0, lsl #10
+AKOSCodec1_rep:						@	for (int j = 0; j < repeat; j++) {
+	cmp r3, #0x8000					@		if (color != 0)
+	strneh r3, [r4]					@			writePaletteColor_asm(Colors, Dst + (y * Width * 2 + x * 2), ((uint8_t*)Palette)[color]);
+
+	add r4, r7, lsl #1
 	add r11, r11, #1				@		y++;
 	cmp r11, r9						@		if (y == Height)
 	bne AKOSCodec1_forl				@		{
+	mul r0, r9, r7
+	sub r0, r0, #1
+	sub r4, r4, r0, lsl #1
 	mov r11, #0						@			y = 0;
 	add r10, r10, #1				@			x++;
 	cmp r10, r7						@			if (x == Width)

@@ -36,6 +36,8 @@ void _0x45_CreateSound()
 	}
 }
 
+static int _LOL_TESTcurrent_level = 0;
+
 void _0x4D_ReadConfigFile()
 {
 	byte option[128], section[128], filename[256];
@@ -90,6 +92,7 @@ void _0x4D_ReadConfigFile()
 		if (!strcmp((char *)option, "Benchmark")) push(2);
 		else if (!strcmp((char*)option, "_LOL-TESTextra-dog")) push(3);
 		else if (!strcmp((char*)option, "_LOL-TESTmouse-use")) push(10);
+		else if (!strcmp((char *)option, "_LOL-TESTcurrent-level")) push(_LOL_TESTcurrent_level);
 		else
 		{
 			push(/*atoi(entry.c_str())*/0);
@@ -142,6 +145,7 @@ void _0x4E_WriteConfigFile()
 		copyScriptString(option, sizeof(option));
 		copyScriptString(section, sizeof(section));
 		copyScriptString(filename, sizeof(filename));
+		if(!strcmp((char *)option, "_LOL-TESTcurrent-level")) _LOL_TESTcurrent_level = value;
 		break;
 	case 77: // HE 100
 	case 7: // string
@@ -175,7 +179,7 @@ void _0x6B_CursorCommand() {
 	case 0x14:
 		a = pop();
 		loadWizCursor(a, 0);
-		printf("Cursor!\n");
+		//printf("Cursor!\n");
 		//while(scanKeys(), keysHeld() == 0);
 		//swiDelay(5000000);
 		break;
@@ -183,7 +187,7 @@ void _0x6B_CursorCommand() {
 		b = pop();
 		a = pop();
 		loadWizCursor(a, b);
-		printf("Cursor!\n");
+		//printf("Cursor!\n");
 		//while(scanKeys(), keysHeld() == 0);
 		//swiDelay(5000000);
 		break;
@@ -237,7 +241,7 @@ void _0x70_SetState()
 
 	state &= 0x7FFF;
 	putState(obj, state);
-	//removeObjectFromDrawQue(obj); 
+	removeObjectFromDrawQue(obj); 
 }
 
 void _0xE3_PickVarRandom()

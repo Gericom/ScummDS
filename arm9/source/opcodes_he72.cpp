@@ -66,6 +66,18 @@ void _0x1B_IsAnyOf()
 	push(0);
 }
 
+void _0x50_ResetCutscene()
+{
+	int idx;
+
+	idx = vm.cutSceneStackPointer;
+	vm.cutSceneStackPointer = 0;
+	vm.cutScenePtr[idx] = 0;
+	vm.cutSceneScript[idx] = 0;
+
+	VAR(VAR_OVERRIDE) = 0;
+} 
+
 void _0x58_GetTimer()
 {
 	int timer = pop();
@@ -151,6 +163,7 @@ void _0x61_DrawObject()
 	int object = pop();
 	printf("Draw Object %d at (%d, %d) with state %d\n", object, x, y, state);
 	int objnum = getObjectIndex(object);
+	printf("Index %d\n", objnum);
 	if (objnum == -1) return;
 
 	if (y != -100 && x != -100) {
@@ -159,7 +172,7 @@ void _0x61_DrawObject()
 	}
 
 	if (state != -1) {
-		//addObjectToDrawQue(objnum);
+		addObjectToDrawQue(objnum);
 		putState(object, state);
 	}
 }
@@ -403,7 +416,8 @@ void _0x9D_ActorOps()
 		j = pop();
 		i = pop();
 		//assertRange(0, i, 255, "palette slot");
-		//a->remapActorPaletteColor(i, j);
+		printf("SO_PALETTE (color=%d,new=%d)\n", i, j);
+		remapActorPaletteColor(a, i, j);
 		a->_needRedraw = true;
 		break;
 	case 87:		// SO_TALK_COLOR
@@ -639,13 +653,14 @@ void _0xAE_SystemOps()
 	switch (subOp) {
 	case 22: // HE80+
 		printf("clearDrawObjectQueue\n");
-		InitFrameBuffers();
+		//InitFrameBuffers();
 		//while(1);
-		//clearDrawObjectQueue();
+		clearDrawObjectQueue();
 		break;
 	case 26: // HE80+
 		printf("restoreBackgroundHE\n");
 		InitFrameBuffers();
+		ClearObjectFrameBuffer();
 		//while(1);
 		//restoreBackgroundHE(Common::Rect(_screenWidth, _screenHeight));
 		//updatePalette();
@@ -861,23 +876,23 @@ void _0xDA_OpenFile()
 		case 6: { // Append mode
 			printf("Append mode not supported!\n");
 			/*if (strchr(filename, '/'))
-				break;
+			break;
 
 			// First check if the file already exists
 			Common::InSaveFile *initialState = 0;
 			if (!_saveFileMan->listSavefiles(filename).empty())
-				initialState = _saveFileMan->openForLoading(filename);
+			initialState = _saveFileMan->openForLoading(filename);
 			else
-				initialState = SearchMan.createReadStreamForMember(filename);
+			initialState = SearchMan.createReadStreamForMember(filename);
 
 			// Read in the data from the initial file
 			uint32 initialSize = 0;
 			byte *initialData = 0;
 			if (initialState) {
-				initialSize = initialState->size();
-				initialData = new byte[initialSize];
-				initialState->read(initialData, initialSize);
-				delete initialState;
+			initialSize = initialState->size();
+			initialData = new byte[initialSize];
+			initialState->read(initialData, initialSize);
+			delete initialState;
 			}
 
 			// Attempt to open a save file
@@ -885,11 +900,11 @@ void _0xDA_OpenFile()
 
 			// Begin us off with the data from the previous file
 			if (_hOutFileTable[slot] && initialData) {
-				_hOutFileTable[slot]->write(initialData, initialSize);
-				delete[] initialData;
+			_hOutFileTable[slot]->write(initialData, initialSize);
+			delete[] initialData;
 			}*/
 
-			} break;
+				} break;
 		default:
 			printf("Error: o72_openFile(): wrong open file mode %d\n", mode);
 		}
@@ -913,47 +928,47 @@ void _0xDB_ReadFile()
 	switch (subOp) {
 	case 4:
 		{
-		slot = pop();
-		if(slot == -1)
-		{
-			push(0);
-			return;
-		}
-		fseek(HEx_File, _hInFileTable[slot], SEEK_SET);
-		uint8_t b;
-		readByte(HEx_File, &b);
-		push(b);
-		_hInFileTable[slot]++;
+			slot = pop();
+			if(slot == -1)
+			{
+				push(0);
+				return;
+			}
+			fseek(HEx_File, _hInFileTable[slot], SEEK_SET);
+			uint8_t b;
+			readByte(HEx_File, &b);
+			push(b);
+			_hInFileTable[slot]++;
 		}
 		break;
 	case 5:
 		{
-		slot = pop();
-		if(slot == -1)
-		{
-			push(0);
-			return;
-		}
-		fseek(HEx_File, _hInFileTable[slot], SEEK_SET);
-		uint16_t b;
-		readU16LE(HEx_File, &b);
-		push(b);
-		_hInFileTable[slot]+=2;
+			slot = pop();
+			if(slot == -1)
+			{
+				push(0);
+				return;
+			}
+			fseek(HEx_File, _hInFileTable[slot], SEEK_SET);
+			uint16_t b;
+			readU16LE(HEx_File, &b);
+			push(b);
+			_hInFileTable[slot]+=2;
 		}
 		break;
 	case 6:
 		{
-		slot = pop();
-		if(slot == -1)
-		{
-			push(0);
-			return;
-		}
-		fseek(HEx_File, _hInFileTable[slot], SEEK_SET);
-		uint32_t b;
-		readU32LE(HEx_File, &b);
-		push(b);
-		_hInFileTable[slot]+=4;
+			slot = pop();
+			if(slot == -1)
+			{
+				push(0);
+				return;
+			}
+			fseek(HEx_File, _hInFileTable[slot], SEEK_SET);
+			uint32_t b;
+			readU32LE(HEx_File, &b);
+			push(b);
+			_hInFileTable[slot]+=4;
 		}
 		break;
 	case 8:
@@ -1024,20 +1039,20 @@ void _0xE1_GetPixel()
 	/*switch (subOp) {
 	case 9: // HE 100
 	case 218:
-		if (_game.features & GF_16BIT_COLOR)
-			area = READ_UINT16(vs->getBackPixels(x, y - vs->topline));
-		else
-			area = *vs->getBackPixels(x, y - vs->topline);
-		break;
+	if (_game.features & GF_16BIT_COLOR)
+	area = READ_UINT16(vs->getBackPixels(x, y - vs->topline));
+	else
+	area = *vs->getBackPixels(x, y - vs->topline);
+	break;
 	case 8: // HE 100
 	case 219:
-		if (_game.features & GF_16BIT_COLOR)
-			area = READ_UINT16(vs->getPixels(x, y - vs->topline));
-		else
-			area = *vs->getPixels(x, y - vs->topline);
-		break;
+	if (_game.features & GF_16BIT_COLOR)
+	area = READ_UINT16(vs->getPixels(x, y - vs->topline));
+	else
+	area = *vs->getPixels(x, y - vs->topline);
+	break;
 	default:
-		error("o72_getPixel: default case %d", subOp);
+	error("o72_getPixel: default case %d", subOp);
 	}
 	push(area);*/
 } 
@@ -1092,28 +1107,42 @@ void _0xF3_ReadINI()
 		break;
 	case 77: // HE 100
 	case 7: // string
-		writeVar(0, 0);
-		/*if (!strcmp((char *)option, "HE3File")) {
-		Common::String fileName = generateFilename(-3);
-		int len = resStrLen((const byte *)fileName.c_str());
-		data = defineArray(0, kStringArray, 0, 0, 0, len);
-		memcpy(data, fileName.c_str(), len);
-		} else if (!strcmp((char *)option, "GameResourcePath") || !strcmp((char *)option, "SaveGamePath")) {
-		// We set SaveGamePath in order to detect where it used
-		// in convertFilePath and to avoid warning about invalid
-		// path in Macintosh verisons.
-		data = defineArray(0, kStringArray, 0, 0, 0, 2);
-		if (_game.platform == Common::kPlatformMacintosh)
-		memcpy(data, (const char *)"*:", 2);
-		else
-		memcpy(data, (const char *)"*\\", 2);
-		} else {
-		const char *entry = (ConfMan.get((char *)option).c_str());
-		int len = resStrLen((const byte *)entry);
-		data = defineArray(0, kStringArray, 0, 0, 0, len);
-		memcpy(data, entry, len);
-		}*/
-		push(/*readVar(0)*/0);
+		{
+			writeVar(0, 0);
+			const char *entry = "";
+			int len = resStrLen((const byte *)entry);
+			data = defineArray(0, kStringArray, 0, 0, 0, len);
+			memcpy(data, entry, len);
+			//With a higher machine speed, there are more details -> more actors, so better not force that to high for now!
+			/*if (!strcmp((char *)option, "ForceMachineSpeed"))
+			{
+			const char *entry = "FAST-MACHINE";
+			int len = resStrLen((const byte *)entry);
+			data = defineArray(0, kStringArray, 0, 0, 0, len);
+			memcpy(data, entry, len);
+			}*/
+			/*if (!strcmp((char *)option, "HE3File")) {
+			Common::String fileName = generateFilename(-3);
+			int len = resStrLen((const byte *)fileName.c_str());
+			data = defineArray(0, kStringArray, 0, 0, 0, len);
+			memcpy(data, fileName.c_str(), len);
+			} else if (!strcmp((char *)option, "GameResourcePath") || !strcmp((char *)option, "SaveGamePath")) {
+			// We set SaveGamePath in order to detect where it used
+			// in convertFilePath and to avoid warning about invalid
+			// path in Macintosh verisons.
+			data = defineArray(0, kStringArray, 0, 0, 0, 2);
+			if (_game.platform == Common::kPlatformMacintosh)
+			memcpy(data, (const char *)"*:", 2);
+			else
+			memcpy(data, (const char *)"*\\", 2);
+			} else {
+			const char *entry = (ConfMan.get((char *)option).c_str());
+			int len = resStrLen((const byte *)entry);
+			data = defineArray(0, kStringArray, 0, 0, 0, len);
+			memcpy(data, entry, len);
+			}*/
+			push(readVar(0));
+		}
 		break;
 	default:
 		printf("Error: o72_readINI: default type %d\n", subOp);

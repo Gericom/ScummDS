@@ -26,4 +26,11 @@ void putState(int obj, int state);
 int getObjectIndex(int object);
 //int findObject(int x, int y);
 
+void drawObject(int obj, int arg);
+void processDrawQue();
+void addObjectToDrawQue(int object);
+void removeObjectFromDrawQue(int object);
+void clearDrawObjectQueue();
+void clearDrawQueues();
+
 #endif

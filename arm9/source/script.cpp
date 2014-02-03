@@ -22,7 +22,7 @@ VirtualMachineState vm;
 
 //uint8_t scriptdata[16384];
 
-uint32 _localScriptOffsets[1024];
+//uint32 _localScriptOffsets[1024];
 const byte *_scriptPointer;
 byte *_scriptOrgPointer = NULL;// = &scriptdata[0];
 //const byte * const *_lastCodePtr;
@@ -56,7 +56,7 @@ void runScript(int script, bool freezeResistant, bool recursive, int *lvarptr, i
 	byte scriptType;
 	int slot;
 
-	if (!script)
+	if (script <= 0)
 		return;
 
 	if (!recursive)
@@ -76,14 +76,13 @@ void runScript(int script, bool freezeResistant, bool recursive, int *lvarptr, i
 		scriptOffs = 0;//_resourceHeaderSize;
 		scriptType = WIO_GLOBAL;
 
-		printf("Debug: runScript(Global-%d) from %d-%d\n", script, number, _roomResource);
+		//printf("Debug: runScript(Global-%d) from %d-%d\n", script, number, _roomResource);
 	} else {
 		//if((script - _numGlobalScripts) >= RoomResource->RMDA->NrLocalScripts) printf("Error: Local script %d is not in room %d\n", script, _roomResource);
 		scriptOffs = 0;//_localScriptOffsets[script - _numGlobalScripts];
 		scriptType = WIO_LOCAL;
 
-		printf("Debug: runScript(%d) from %d-%d\n", script, number, _roomResource);
-		//while(1);
+		//printf("Debug: runScript(%d) from %d-%d\n", script, number, _roomResource);
 	}
 
 	if (cycle == 0)
@@ -508,6 +507,8 @@ void refreshScriptPointer() {
 	}*/
 }
 
+static inline void executeOpcode(byte i);
+
 /** Execute a script - Read opcode, and execute it from the table */
 void executeScript() {
 	soundIO_FillStreamBuffers();//Update the sound stream here just to make sure the sound will continue to play correctly. When the frames (all frames!) render < 4 seconds for sure, this can be removed.
@@ -534,7 +535,7 @@ void executeScript() {
 	}
 }
 
-inline void executeOpcode(byte i)
+static inline void executeOpcode(byte i)
 {
 	switch(i)
 	{
@@ -585,6 +586,7 @@ inline void executeOpcode(byte i)
 	case 0x4D: _0x4D_ReadConfigFile(); break;
 	case 0x4E: _0x4E_WriteConfigFile(); break;
 	case 0x4F: _0x4F_WordVarInc(); break;
+	case 0x50: _0x50_ResetCutscene(); break;
 	case 0x53: _0x53_WordArrayInc(); break;
 	case 0x57: _0x57_WordVarDec(); break;
 	case 0x58: _0x58_GetTimer(); break;
@@ -604,6 +606,7 @@ inline void executeOpcode(byte i)
 	case 0x6E: _0x6E_SetClass(); break;
 	case 0x6F: _0x6F_GetState(); break;
 	case 0x70: _0x70_SetState(); break;
+	case 0x72: _0x72_GetOwner(); break;
 	case 0x73: _0x73_Jump(); break;
 	case 0x74: _0x74_StartSound(); break;
 	case 0x75: _0x75_StopSound(); break;
@@ -748,6 +751,7 @@ int readVar(uint var) {
 		}*/
 
 		//assertRange(0, var, _numVariables - 1, "variable (reading)");
+
 		return _scummVars[var];
 	}
 
@@ -828,6 +832,7 @@ void writeVar(uint var, int value) {
 			printf("Error: Out of range!\n");
 			return;
 		}
+
 
 		_scummVars[var] = value;
 

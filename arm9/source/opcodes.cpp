@@ -326,7 +326,7 @@ int readArray(int array, int idx2, int idx1) {
 
 	if (readVar(array) == 0)
 	{
-		printf("Error: readArray: Reference to zeroed array pointer\n");
+		printf("Error: readArray: Reference to zeroed array pointer (%d)\n", array);
 		//while(scanKeys(), keysHeld() == 0);
 		//	swiDelay(5000000);
 		return 0;
@@ -463,12 +463,18 @@ void redimArray(int arrayId, int newDim2start, int newDim2end,
 		int newSize, oldSize;
 
 		if (readVar(arrayId) == 0)
+		{
 			printf("Error: redimArray: Reference to zeroed array pointer\n");
+			return;
+		}
 
 		ArrayHeader *ah = _arrays[readVar(arrayId) & ~0x33539000];//(ArrayHeader *)getResourceAddress(rtString, readVar(arrayId));
 
-		if (!ah)
+		if (ah == NULL)
+		{
 			printf("Error: redimArray: Invalid array (%d) reference\n", readVar(arrayId));
+			return;
+		}
 
 		newSize = arrayDataSizes[type];
 		oldSize = arrayDataSizes[ah->type];
@@ -481,7 +487,10 @@ void redimArray(int arrayId, int newDim2start, int newDim2end,
 		oldSize >>= 3;
 
 		if (newSize != oldSize)
+		{
 			printf("Error: redimArray: array %d redim mismatch\n", readVar(arrayId));
+			return;
+		}
 
 		ah->type = type;
 		ah->dim1start = newDim1start;
@@ -493,14 +502,17 @@ void redimArray(int arrayId, int newDim2start, int newDim2end,
 void checkArrayLimits(int array, int dim2start, int dim2end, int dim1start, int dim1end) {
 	if (dim1end < dim1start) {
 		printf("Error: Across max %d smaller than min %d\n", dim1end, dim1start);
+		return;
 	}
 	if (dim2end < dim2start) {
 		printf("Error: Down max %d smaller than min %d\n", dim2end, dim2start);
+		return;
 	}
 	ArrayHeader *ah = _arrays[readVar(array) & ~0x33539000];//(ArrayHeader *)getResourceAddress(rtString, readVar(array));
 	//assert(ah);
 	if ((int)ah->dim2start > dim2start || (int)ah->dim2end < dim2end || (int)ah->dim1start > dim1start || (int)ah->dim1end < dim1end) {
 		printf("Error: Invalid array access (%d,%d,%d,%d) limit (%d,%d,%d,%d)\n", dim2start, dim2end, dim1start, dim1end, ah->dim2start, ah->dim2end, ah->dim1start, ah->dim1end);
+		return;
 	}
 }
 
@@ -518,6 +530,7 @@ void copyArray(int array1, int a1_dim2start, int a1_dim2end, int a1_dim1start, i
 	int a21_num = a2_dim1end - a2_dim1start + 1;
 	if (a22_num != a12_num || a21_num != a11_num) {
 		printf("Error: Operation size mismatch (%d vs %d)(%d vs %d)\n", a12_num, a22_num, a11_num, a21_num);
+		return;
 	}
 
 	if (array1 != array2) {
@@ -1050,6 +1063,11 @@ void _0x6F_GetState()
 	push(getState(obj)); 
 }
 
+void _0x72_GetOwner()
+{
+	push(getOwner(pop()));
+}
+
 void _0x73_Jump()
 {
 	_scriptPointer += fetchScriptWordSigned();
@@ -1088,7 +1106,7 @@ void _0x7F_PutActorAtXY()
 	y = pop();
 	x = pop();
 	act = pop();
-	a = &_actors[act];//derefActor(act, "o6_putActorAtXY");
+	a = &_actors[act];
 
 	if (room == 0xFF || room == 0x7FFFFFFF) {
 		room = a->_room;
@@ -1107,7 +1125,7 @@ void _0x82_AnimateActor()
 	int anim = pop();
 	int act = pop();
 
-	Actor *a = &_actors[act];//derefActor(act, "o6_animateActor");
+	Actor *a = &_actors[act];
 	animateActor(a, anim); 
 }
 
@@ -1237,14 +1255,7 @@ void _0xA9_Wait()
 			break;
 		return;
 	case 169:		// SO_WAIT_FOR_MESSAGE Wait for message
-		//printf("VAR(VAR_HAVE_MSG) = %X\n", VAR(VAR_HAVE_MSG));
-		if (VAR(VAR_HAVE_MSG))
-		{
-			//if(_haveMsg >= 64) _haveMsg-=64;
-			//else _haveMsg = 0;
-
-			break;
-		}
+		if (VAR(VAR_HAVE_MSG)) break;
 		return;
 	case 170:		// SO_WAIT_FOR_CAMERA Wait for camera
 		//if (camera._cur.x / 8 != camera._dest.x / 8)
@@ -1438,7 +1449,7 @@ void _0xCD_StampObject()
 	}
 
 	putState(object, state);
-	//drawObject(objnum, 0);
+	drawObject(objnum, 0);
 }
 
 void _0xD0_GetDateTime()
@@ -1460,7 +1471,7 @@ void _0xD1_StopTalking()
 void _0xD2_GetAnimateVariable()
 {
 	int var = pop();
-	Actor *a = &_actors[pop()];//derefActor(pop(), "o6_getAnimateVariable");
+	Actor *a = &_actors[pop()];
 	push(getAnimVar(a, var));
 }
 

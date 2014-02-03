@@ -92,7 +92,7 @@ void _0x8C_GetActorRoom()
 		return;
 	}
 
-	Actor *a = &_actors[act];//derefActor(act, "o6_getActorRoom");
+	Actor *a = &_actors[act];
 	push(a->_room); 
 }
 

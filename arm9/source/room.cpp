@@ -16,6 +16,7 @@
 #include <graphics.h>
 #include <render.h>
 #include <resources.h>
+#include <objects.h>
 
 LFLF_t Room;
 LFLF_t* RoomResource = NULL;
@@ -99,6 +100,8 @@ void startScene(int room, Actor* a, int objectNr)
 	//	ensureResourceLoaded(rtRoom, room);
 
 	//clearRoomObjects();
+	ClearObjectFrameBuffer();
+	clearDrawObjectQueue();
 
 	if(RoomResource != NULL) freeLFLF(RoomResource);
 

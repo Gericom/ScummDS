@@ -20,4 +20,9 @@ The games listed here do NOT run fully correctly (since the interpreter is just 
 * <b>Spy Fox 1 Demo</b> (Dutch)
 
 <h3>Usage</h3>
-Use <a href="https://github.com/Gericom/HEPacker">HEPacker</a> to pack your game and change the path in arm9/source/main.cpp. After that, just compile and run on your ds.
+<ul>
+<li>Compile ScummDS and copy it to the root of your sd.
+<li>Copy the content of the fat folder to the root of your sd aswell.</li>
+<li>Use <a href="https://github.com/Gericom/HEPacker">HEPacker</a> to pack your game and put it in the scumm folder.</li>
+<li>Enjoy!</li>
+</ul>

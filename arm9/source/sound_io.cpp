@@ -69,7 +69,16 @@ void soundIO_PlaySound(int channel, void* data, SoundFormat format, u32 dataSize
 void soundIO_StopSound(int channel)
 {
 	soundIO_WriteReg32(SOUNDxCNT(channel), 0); 
-	if(channel == streamChannel) timerStop(2);
+	if(channel == streamChannel)
+	{
+			timerStop(2);
+			streamChannel = -1;
+			streamHandle = NULL;
+			streamOffset = 0;
+			streamTimerUpdate = false;
+			streamNeedData = false;
+			streamDstBufferId = STREAM_BUFFER_A;
+	}
 }
 
 static void soundIO_UpdateStream()
@@ -123,7 +132,7 @@ void soundIO_StartStream(int channel, FILE* handle, uint32_t offset, SoundFormat
 	streamTimerUpdate = false;
 
 	uint16_t timerval = (uint16_t)((-16756991 / freq));
-	uint16_t alarmval = TIMER_FREQ_1024(0.5);//timerval * STREAM_BUFFER_SIZE / 32u;
+	uint16_t alarmval = TIMER_FREQ_1024(0.5);///*0.5*/freq / ((uint16_t)(-16756991 / timerval) + 2) / 2);//*/timerval * STREAM_BUFFER_SIZE / 2u / 512u;
 
 	soundIO_WriteReg32(SOUNDxSAD(channel), (uint32_t)&streamDstBuffer[0]);
 	soundIO_WriteReg16(SOUNDxPNT(channel), 0);

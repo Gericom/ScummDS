@@ -1,6 +1,5 @@
 #include <nds.h>
 #include <fat.h>
-#include <maxmod9.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -20,6 +19,7 @@
 #include <objects.h>
 #include <opcodes.h>
 #include <verbs.h>
+#include <akos.h>
 
 #include <sound_io.h>
 
@@ -56,7 +56,20 @@ void processInput()
 	int pressed = keysDown();
 	int held = keysHeld();
 
+	if(pressed & KEY_START)
+	{
+		//menu here!
+		//How to reset to main menu?
+	}
+
 	if(pressed & KEY_R) abortCutscene();
+
+	VAR(VAR_KEY_STATE) = 0;
+
+	if(held & KEY_LEFT) VAR(VAR_KEY_STATE) |= 1;
+	else if(held & KEY_RIGHT) VAR(VAR_KEY_STATE) |= 2;
+	else if(held & KEY_UP) VAR(VAR_KEY_STATE) |= 4;
+	else if(held & KEY_DOWN) VAR(VAR_KEY_STATE) |= 8;
 
 	if(lastpressed & KEY_TOUCH && !(pressed & KEY_TOUCH) && !(held & KEY_TOUCH))
 	{ 
@@ -72,107 +85,27 @@ void processInput()
 	_mouse_y = touch.py * 2.5;
 }
 
-//const char* hep = "/scumm/PJS2DEMO.hep";
+static char* hep;
 
-//const char* he0 = "/scumm/PJS2DEMO.HE0";
-//const char* he1 = "/scumm/PJS2DEMO.(A)";
-//const char* he4 = "/scumm/PJS2DEMO.HE4";
+static int render = 0;
 
-//const char* hep = "/scumm/F4-DEMO.hep";
-
-//const char* he0 = "/scumm/F4-DEMO.HE0";
-//const char* he1 = "/scumm/F4-DEMO.(A)";
-
-//const char* hep = "/scumm/SokkenSoep.hep";
-
-//const char* he0 = "/scumm/SokkenSoep.HE0";
-//const char* he1 = "/scumm/SokkenSoep.(a)";
-
-const char* hep = "/scumm/DOOLHOF.hep";
-
-//const char* he0 = "/scumm/DOOLHOF.HE0";
-//const char* he1 = "/scumm/DOOLHOF.(A)";
-
-//const char* he0 = "/scumm/ZOODEMO.HE0";//op
-//const char* he1 = "/scumm/ZOODEMO.HE1";
-
-//const char* hep = "/scumm/SPYDEMO.hep";
-
-//const char* he0 = "/scumm/SPYDEMO.HE0";
-//const char* he1 = "/scumm/SPYDEMO.(A)";
-
-//const char* hep = "/scumm/sf2demo.hep";
-
-//const char* he0 = "/scumm/sf2demo.he0";
-//const char* he1 = "/scumm/sf2demo.(a)";
-
-//const char* hep = "/scumm/PAJAMA.hep";
-
-//const char* he0 = "/scumm/sam/PAJAMA.HE0";
-//const char* he1 = "/scumm/sam/PAJAMA.HE1";
-
-//const char* hep = "/scumm/PAJAMA2.hep";
-
-//const char* he0 = "/scumm/sam2/PAJAMA2.HE0";//op
-//const char* he1 = "/scumm/sam2/PAJAMA2.(A)";
-
-//const char* he0 = "/scumm/spy1/SPYFox.HE0";
-//const char* he1 = "/scumm/spy1/SPYFox.(A)";
-
-//const char* hep = "/scumm/pj3demo.hep";
-
-//const char* he0 = "/scumm/pj3demo.he0";
-//const char* he1 = "/scumm/pj3demo.(a)";
-
-//const char* hep = "/scumm/Pajama3.hep";
-
-//const char* hep = "/scumm/SPYFox.hep";
-
-//const char* hep = "/scumm/Spyfox2.hep";
-
-//const char* hep = "/scumm/PUTTTIJD.hep";
-
-//const char* hep = "/scumm/FREDDI4.hep";
-
-//static int framenr = 0;
+static int textureID;
 
 int main()
 {
 	defaultExceptionHandler();
-	consoleDemoInit();
-	lcdMainOnBottom(); 
-	TIMER0_CR = TIMER_ENABLE|TIMER_DIV_1024;
-	TIMER1_CR = TIMER_ENABLE|TIMER_CASCADE;
+	videoSetMode(MODE_3_2D);
 
-	soundIO_InstallFIFO();
-	soundIO_Enable();
+	vramSetBankA(VRAM_A_MAIN_BG);
+	vramSetBankB(VRAM_B_MAIN_BG);
+	vramSetBankC(VRAM_C_MAIN_BG); 
 
-/*	mm_ds_system sys;
-	sys.mod_count 			= 0;
-	sys.samp_count			= 0;
-	sys.mem_bank			= 0;
-	sys.fifo_channel		= FIFO_MAXMOD;
-	mmInit( &sys ); */
+	consoleInit(NULL, 2, BgType_Text4bpp, BgSize_T_256x256, 0, 3, true, true);
+	consoleSetWindow(NULL, 3, 3, 29, 16); 
+	lcdMainOnBottom();	
 
-	//irqInit();
-	
-	glInit();
-	videoSetMode(MODE_0_3D);
-	glEnable(GL_TEXTURE_2D);
-	int textureID;
-	glGenTextures(1, &textureID);
-	glViewport(0,0,255,191);
-	glClearColor(0,0,0,31);
-	glClearPolyID(63);
-	glClearDepth(0x7FFF);
-	vramSetBankA(VRAM_A_TEXTURE_SLOT0);
-	vramSetBankB(VRAM_B_TEXTURE_SLOT1);
-	//vramSetBankC(VRAM_C_TEXTURE_SLOT2);
-	vramSetBankD(VRAM_D_TEXTURE_SLOT2);
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity(); 
-	glOrthof32(0, 256, 192, 0, 410, 409600);
-	glStoreMatrix(0);
+	int bg3 = bgInit(3, BgType_Bmp16, BgSize_B16_256x256, 8, 0); 
+	bgSetPriority (bg3, 0);
 
 	printf("Loading FAT...");
 	if(!fatInitDefault())
@@ -181,6 +114,93 @@ int main()
 		return 1;
 	}
 	printf("Done!\n");
+
+	iprintf("\x1b[2J");
+
+	FILE* bg = fopen("/scumm/resources/bottomscreen.bin", "rb");
+	fread(bgGetGfxPtr(bg3), 2, 256 * 192, bg);
+	fclose(bg);
+
+	iprintf("\x1b[30m");
+
+	int num = 0;
+
+	DIR *pdir;
+	struct dirent *pent;
+
+	pdir=opendir("/scumm");
+
+	while ((pent=readdir(pdir))!=NULL) {
+		if(strcmp(".", pent->d_name) == 0 || strcmp("..", pent->d_name) == 0 || pent->d_type == DT_DIR)
+			continue;
+		iprintf("  %s\n", pent->d_name);
+		num++;
+	}
+
+	closedir(pdir);
+
+
+	int line = 0;
+	iprintf("\x1b[%d;0H>", line);
+	while(1)
+	{
+		ushort keys;
+		while(scanKeys(), keysHeld() == 0);
+		keys = keysHeld();
+		if(keys & KEY_DOWN && line + 1 < num)
+		{
+			iprintf("\x1b[%d;0H ", line);
+			iprintf("\x1b[%d;0H>", ++line);
+		}
+		else if(keys & KEY_UP && line - 1 >= 0)
+		{
+			iprintf("\x1b[%d;0H ", line);
+			iprintf("\x1b[%d;0H>", --line);
+		}
+		else if(keys & KEY_A) break;
+		swiDelay(5000000);
+	}
+	num = 0;
+	pdir=opendir("/scumm");
+
+	while ((pent=readdir(pdir))!=NULL) {
+		if(strcmp(".", pent->d_name) == 0 || strcmp("..", pent->d_name) == 0 || pent->d_type == DT_DIR)
+			continue;
+		if(num == line)
+		{
+			char outp[512] = "/scumm/";
+			memcpy(&outp[7], pent->d_name, 256);
+			hep = &outp[0];
+			break;
+		}
+		num++;
+	}
+
+	closedir(pdir); 
+
+	consoleDemoInit();
+	TIMER0_CR = TIMER_ENABLE|TIMER_DIV_1024;
+	TIMER1_CR = TIMER_ENABLE|TIMER_CASCADE;
+
+	soundIO_InstallFIFO();
+	soundIO_Enable();
+
+	glInit();
+	videoSetMode(MODE_0_3D);
+	glEnable(GL_TEXTURE_2D);
+
+	glGenTextures(1, &textureID);
+	glViewport(0,0,255,191);
+	glClearColor(0,0,0,31);
+	glClearPolyID(63);
+	glClearDepth(0x7FFF);
+	vramSetBankA(VRAM_A_TEXTURE_SLOT0);
+	vramSetBankB(VRAM_B_TEXTURE_SLOT1);
+	//vramSetBankD(VRAM_D_TEXTURE_SLOT2);
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity(); 
+	glOrthof32(0, 256, 192, 0, 410, 409600);
+	glStoreMatrix(0);
 
 	printf("Loading HEP...");
 	FILE* HEP_F = fopen(hep, "rb");
@@ -193,57 +213,28 @@ int main()
 	readHEP(HEP_F);
 	readHE0(HE0_File, &HE0_Data);
 
-	/*printf("Loading HE0...");
-	HE0_File = fopen(he0, "rb");
-	if(HE0_File == NULL)
+	//prerendering
 	{
-		printf("Failed!\n");
-		return 1;
+		glMatrixMode(GL_MODELVIEW);
+		glPolyFmt(POLY_ALPHA(31) | POLY_CULL_NONE);
+		glLoadIdentity();
+		glBindTexture(0, textureID);
+		RenderFrame();
+		glColor3b(255, 255, 255);
+		glBegin(GL_QUAD);
+		glTexCoord2t16(0, 0);
+		glVertex3v16(0, 0, -7 * 4096);
+		glTexCoord2t16(320 * 16, 0);
+		glVertex3v16(256, 0, -7 * 4096);
+		glTexCoord2t16(320 * 16, 240 * 16);
+		glVertex3v16(256, 192, -7 * 4096);
+		glTexCoord2t16(0, 240 * 16);
+		glVertex3v16(0, 192, -7 * 4096);
+		glEnd();
+		glFlush(GL_TRANS_MANUALSORT);
 	}
-	printf("Done!\n");
-	readHE0(HE0_File, &HE0_Data);
 
-	printf("Loading HE1...");
-	HE1_File = fopen(he1, "rb");
-	if(HE1_File == NULL)
-	{
-		printf("Failed!\n");
-		return 1;
-	}
-	printf("Done!\n");*/
-
-	/*printf("Loading HE...");
-	HE0_File = fopen(he, "rb");
-	if(HE0_File == NULL)
-	{
-		printf("Failed!\n");
-		return 1;
-	}
-	printf("Done!\n");
-	HE1_File = HE0_File;
-	readHE0(HE0_File, &HE0_Data);*/
-
-	/*if(he4 != NULL)
-	{
-		printf("Loading HE4...");
-		HE4_File = fopen(he4, "rb");
-		if(HE4_File == NULL)
-		{
-			printf("Failed!\n");
-			return 1;
-		}
-		printf("Done!\n");
-		//fclose(HE4_File);
-	}*/
-	
 	_numGlobalScripts = getScriptCount(HE0_File, &HE0_Data);
-
-	//GlobalScripts = (void**)malloc(_numGlobalScripts * 4);
-
-	//for(int i = 0; i < _numGlobalScripts; i++)
-	//{
-	//	GlobalScripts[i] = NULL;
-	//}
 
 	for(int i = 0; i < _numArray; i++)
 	{
@@ -259,7 +250,7 @@ int main()
 	VAR(VAR_SOUND_CHANNEL) = 1;
 	VAR(VAR_TALK_CHANNEL) = 2;
 
-	VAR(VAR_PLATFORM) = 1; 
+	VAR(VAR_PLATFORM) = 1;
 	VAR(VAR_SCRIPT_CYCLE) = 1;
 	VAR(VAR_NUM_SCRIPT_CYCLES) = 1;
 
@@ -268,9 +259,7 @@ int main()
 	// Array 132 is set to game path
 	defineArray(132, kStringArray, 0, 0, 0, 0);
 
-	//malloc(512);
-	//malloc(512);
-	//malloc(512);
+	ClearObjectFrameBuffer();
 
 	//Execution Starts Here!
 	runScript(1, 0, 0, NULL, 0);
@@ -328,35 +317,25 @@ int main()
 		if (_currentRoom == 0) {}
 		else 
 		{
-			/*glMatrixMode(GL_MODELVIEW);
-			glPolyFmt(POLY_ALPHA(31) | POLY_CULL_NONE);
-			glLoadIdentity();
+			processDrawQue();
 
-			glBindTexture(0, textureID);
-			RenderFrame(textureID);
+			if(!render)
+			{
+				RenderFrame();
+			}
+			else
+			{
+				numactors = 0;
+				for (int i = 0; i < _numActors; i++) {
+					if (isInCurrentRoom(&_actors[i]) && _actors[i]._costume && _actors[i]._cost.AKOS != NULL) {
+						renderCostume(&_actors[i], false);
+						numactors++;
+					}
+				}
+			}
 
-			glColor3b(255, 255, 255);
-			glBegin(GL_QUAD);
-			glTexCoord2t16(0, 0);
-			glVertex3v16(0, 0, -7 * 4096);
-			glTexCoord2t16(320 * 16, 0);
-			glVertex3v16(256, 0, -7 * 4096);
-			glTexCoord2t16(320 * 16, 240 * 16);
-			glVertex3v16(256, 192, -7 * 4096);
-			glTexCoord2t16(0, 240 * 16);
-			glVertex3v16(0, 192, -7 * 4096);
-			glEnd();
-			glFlush(GL_TRANS_MANUALSORT);*/
-
-				glMatrixMode(GL_MODELVIEW);
-				glPolyFmt(POLY_ALPHA(31) | POLY_CULL_NONE);
-				glLoadIdentity();
-
-				glBindTexture(0, textureID);
-				RenderFrame();//textureID, true);
-
-				glColor3b(255, 255, 255);
-				glBegin(GL_QUAD);
+			if(!render)
+			{
 				glTexCoord2t16(0, 0);
 				glVertex3v16(0, 0, -7 * 4096);
 				glTexCoord2t16(320 * 16, 0);
@@ -365,16 +344,15 @@ int main()
 				glVertex3v16(256, 192, -7 * 4096);
 				glTexCoord2t16(0, 240 * 16);
 				glVertex3v16(0, 192, -7 * 4096);
-				glEnd();
 				glFlush(GL_TRANS_MANUALSORT);
+			}
 
-				//framenr++;
-
+			render++;
+			if(render >= (((numactors * 3) > 5) ? 5: (numactors * 3))) render = 0;
 		}
 
 		doSound();
 		soundIO_FillStreamBuffers();
-		//ReadStream();
 
 		//camera._last = camera._cur;
 
@@ -387,67 +365,6 @@ int main()
 
 		diff = getMillis() - diff; 
 	}
-
-	/*CurrentRoom = readRoom(HE1_File, getLFLFOffset(HE0_File, &HE0_Data, 1));
-	ConvertRoomBackground(HE1_File, CurrentRoom);
-
-
-	int minroomnr = 1;
-	int maxroomnr = getLFLFCount(HE0_File, &HE0_Data) - 1;
-	int roomnr = minroomnr;
-
-	while(true)
-	{
-	glMatrixMode(GL_MODELVIEW);
-	glPolyFmt(POLY_ALPHA(31) | POLY_CULL_NONE);
-	glLoadIdentity();
-
-	glBindTexture(0, textureID);
-	RenderFrame(textureID);
-
-	glColor3b(255, 255, 255);
-	glBegin(GL_QUAD);
-	glTexCoord2t16(0, 0);
-	glVertex3v16(0, 0, -7 * 4096);
-	glTexCoord2t16(320 * 16, 0);
-	glVertex3v16(256, 0, -7 * 4096);
-	glTexCoord2t16(320 * 16, 240 * 16);
-	glVertex3v16(256, 192, -7 * 4096);
-	glTexCoord2t16(0, 240 * 16);
-	glVertex3v16(0, 192, -7 * 4096);
-	glEnd();
-	glFlush(GL_TRANS_MANUALSORT);
-
-	while(true)
-	{
-	scanKeys();
-	u16 keys = keysHeld();
-
-	if((keys & KEY_LEFT))
-	{
-	freeLFLF(CurrentRoom);
-	roomnr--;
-	if(roomnr < minroomnr) roomnr = minroomnr;
-	CurrentRoom = readRoom(HE1_File, getLFLFOffset(HE0_File, &HE0_Data, roomnr));
-	ConvertRoomBackground(HE1_File, CurrentRoom);
-	break;
-	}
-	else if((keys & KEY_RIGHT))
-	{
-	freeLFLF(CurrentRoom);
-	roomnr++;
-	if(roomnr > maxroomnr) roomnr = maxroomnr;
-	CurrentRoom = readRoom(HE1_File, getLFLFOffset(HE0_File, &HE0_Data, roomnr));
-	ConvertRoomBackground(HE1_File, CurrentRoom);
-	break;
-	}
-
-	swiWaitForVBlank();
-	swiWaitForVBlank();
-	swiWaitForVBlank();
-	swiWaitForVBlank();
-	}
-	}*/
 
 	while(1);
 	return 1;

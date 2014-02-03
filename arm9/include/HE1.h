@@ -58,7 +58,14 @@ struct PALS_t
 	WRAP_t* WRAP;
 };
 
-struct OCDH_t
+struct OBIM_t
+{
+	uint16_t ObjectId;
+	uint16_t NrImages;
+	fpos_t IMHDOffset;
+};
+
+/*struct OCDH_t
 {
 	uint16_t ObjectID;
 	int16_t X;
@@ -70,7 +77,7 @@ struct OCDH_t
 	uint16_t XWalk;
 	uint16_t YWalk;
 	uint8_t ActorDirection;
-};
+};*/
 
 struct OBCD_t
 {
@@ -92,6 +99,7 @@ struct RMDA_t
 	RMHD_t RMHD;
 	uint16_t TransClrIdx;
 	PALS_t* PALS;
+	OBIM_t** OBIM;
 	OBCD_t** OBCD;
 	fpos_t EXCD;
 	fpos_t ENCD;

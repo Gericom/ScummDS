@@ -24,6 +24,13 @@ void freeLFLF(LFLF_t* Room)
 
 	for(int i = 0; i < Room->RMDA->RMHD.NrObjects; i++)
 	{
+		free(Room->RMDA->OBIM[i]);
+	}
+
+	free(Room->RMDA->OBIM);
+
+	for(int i = 0; i < Room->RMDA->RMHD.NrObjects; i++)
+	{
 		free(Room->RMDA->OBCD[i]);
 	}
 
@@ -106,6 +113,7 @@ void readRoom(FILE* handle, LFLF_t* LFLF, uint32_t offset)
 				uint32_t end2 = pos + SWAP_CONSTANT_32(size) - 8;
 				int scriptidx = 0;
 				int objectidx = 0;
+				int objectimageidx = 0;
 				while(pos < (end2 - 4))
 				{
 					readU32LE(handle, &sig);
@@ -119,6 +127,7 @@ void readRoom(FILE* handle, LFLF_t* LFLF, uint32_t offset)
 						readU16LE(handle, &LFLF->RMDA->RMHD.RoomHeight);
 						readU16LE(handle, &LFLF->RMDA->RMHD.NrObjects);
 						LFLF->RMDA->OBCD = (OBCD_t**)malloc(4 * LFLF->RMDA->RMHD.NrObjects);
+						LFLF->RMDA->OBIM = (OBIM_t**)malloc(4 * LFLF->RMDA->RMHD.NrObjects);
 						break;
 					case MKTAG('C', 'Y', 'C', 'L'):
 						if(SWAP_CONSTANT_32(size) == 9)	fseek(handle, 1, SEEK_CUR);
@@ -144,6 +153,23 @@ void readRoom(FILE* handle, LFLF_t* LFLF, uint32_t offset)
 						LFLF->RMDA->PALS->WRAP->APAL = (APAL_t*)malloc(SWAP_CONSTANT_32(size) - 8);
 						readBytes(handle, &LFLF->RMDA->PALS->WRAP->APAL->data[0], SWAP_CONSTANT_32(size) - 8);
 						break;	
+					case MKTAG('O', 'B', 'I', 'M'):
+						{
+							LFLF->RMDA->OBIM[objectimageidx] = (OBIM_t*)malloc(sizeof(OBIM_t));
+						
+							uint32_t ttsize = SWAP_CONSTANT_32(size);
+
+							readU32LE(handle, &sig);
+							readU32LE(handle, &size);
+							fgetpos(handle, &LFLF->RMDA->OBIM[objectimageidx]->IMHDOffset);
+							readU16LE(handle, &LFLF->RMDA->OBIM[objectimageidx]->ObjectId);
+							readU16LE(handle, &LFLF->RMDA->OBIM[objectimageidx]->NrImages);
+
+							fseek(handle, ttsize - 8 - 8 - 4, SEEK_CUR);
+
+							objectimageidx++;
+						}
+						break;
 					case MKTAG('O', 'B', 'C', 'D'):
 						LFLF->RMDA->OBCD[objectidx] = (OBCD_t*)malloc(sizeof(OBCD_t));
 

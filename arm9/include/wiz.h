@@ -371,6 +371,7 @@ void displayWizImage(WizImage *pwi);
 void processWizImage(const WizParameters *params);
 void loadWizCursor(int resId, int palette);
 
+void polygonClear();
 void polygonStore(int id, bool flag, int vert1x, int vert1y, int vert2x, int vert2y, int vert3x, int vert3y, int vert4x, int vert4y);
 void polygonCalcBoundBox(Point *vert, int numVerts, Rect &bound);
 void polygonErase(int fromId, int toId);

@@ -80,6 +80,8 @@ enum
 	VAR_NUM_SOUND_CHANNELS = 56,
 	VAR_PLATFORM = 78,
 
+	VAR_KEY_STATE = 86,//HE80
+
 	VAR_TIMER = 97,
 	VAR_SCRIPT_CYCLE = 103,
 	VAR_NUM_SCRIPT_CYCLES = 104
@@ -202,7 +204,6 @@ void getScriptBaseAddress();
 void resetScriptPointer();
 void refreshScriptPointer();
 void executeScript();
-inline void executeOpcode(byte i);
 byte fetchScriptByte();
 uint16 fetchScriptWord();
 int16 fetchScriptWordSigned();

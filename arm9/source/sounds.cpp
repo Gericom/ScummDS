@@ -254,7 +254,7 @@ void doSound()
 	{
 		if(CurrentPlayingSounds[i] != NULL)
 		{
-			if(CurrentPlayingSounds[i]->endtime <= getMillis())
+			if(!CurrentPlayingSounds[i]->loop && CurrentPlayingSounds[i]->endtime <= getMillis())
 			{	
 				if(CurrentPlayingSounds[i]->sound == -1) 
 				{
@@ -288,21 +288,13 @@ void doSound()
 			while(1);
 		}
 
-		/*if(snd)
-		{
-		printf("Sound Count: %d\n", getSoundCount(HE0_File, &HE0_Data));
-		printf("SoundId: %d\n", snd);
-		//while(scanKeys(), keysHeld() == 0);
-		//swiDelay(5000000);
-		}*/
-
 		if(snd >= getSoundCount(HE0_File, &HE0_Data))//HE4 Music
 		{
 			if(heChannel == 2)//talk
 			{
-				printf("HE2!\n");
-				printf("SoundId: %d\n", snd);
-				printf("Channel: %d\n", heChannel);
+				//printf("HE2!\n");
+				//printf("SoundId: %d\n", snd);
+				//printf("Channel: %d\n", heChannel);
 				uint32_t offs = HE2_Start + heOffset;//getSoundOffset(HE0_File, &HE0_Data, snd);
 				fseek(HE2_File, offs, SEEK_SET);
 				uint32_t length;
@@ -318,6 +310,8 @@ void doSound()
 
 				CurrentPlayingSounds[slot]->sound = -1;
 				CurrentPlayingSounds[slot]->length = length;
+				CurrentPlayingSounds[slot]->loop = false;
+				CurrentPlayingSounds[slot]->channel = heChannel;
 #ifndef NOSOUND
 				CurrentPlayingSounds[slot]->data = data;
 				//soundEnable();
@@ -329,9 +323,24 @@ void doSound()
 			}
 			else
 			{
-				printf("HE4!\n");
-				printf("SoundId: %d\n", snd);
-				printf("Channel: %d\n", heChannel);
+				//printf("HE4!\n");
+				//printf("SoundId: %d\n", snd);
+				//printf("Channel: %d\n", heChannel);
+				for(int i = 0; i < 16; i++)
+				{
+					if(CurrentPlayingSounds[i] != NULL)
+					{
+						if(CurrentPlayingSounds[i]->channel == heChannel)
+						{
+#ifndef NOSOUND
+							soundIO_StopSound(CurrentPlayingSounds[i]->soundid);
+							free(CurrentPlayingSounds[i]->data);
+#endif
+							free(CurrentPlayingSounds[i]);
+							CurrentPlayingSounds[i] = NULL;
+						}
+					}
+				}
 				if(HE4_File != NULL)
 				{
 					fseek(HE4_File, HE4_Start + 12, SEEK_SET);
@@ -365,6 +374,8 @@ void doSound()
 							/*else*/ slot = findFreeSlot();
 							CurrentPlayingSounds[slot]->sound = snd;
 							CurrentPlayingSounds[slot]->length = length;
+							CurrentPlayingSounds[slot]->loop = false;
+							CurrentPlayingSounds[slot]->channel = heChannel;
 							CurrentPlayingSounds[slot]->data = data;
 
 							//streamslot = slot;
@@ -391,8 +402,17 @@ void doSound()
 		}
 		else if(snd > 0 && snd < getSoundCount(HE0_File, &HE0_Data))//Room Noise
 		{
+			//printf("HE1!\n");
+			//printf("SoundId: %d\n", snd);
+			//printf("Channel: %d\n", heChannel);
+			//while(scanKeys(), keysHeld() == 0);
+			//swiDelay(5000000);
 			uint32_t offs = getSoundOffset(HE0_File, &HE0_Data, snd);
-			if(offs <= HE1_Start) continue;
+			if(offs <= HE1_Start)
+			{
+				printf("offs <= HE1_Start: %x\n", offs);
+				continue;
+			}
 			fseek(HE1_File, offs, SEEK_SET);
 			uint32_t length;
 			uint16_t rate;
@@ -408,11 +428,12 @@ void doSound()
 
 			CurrentPlayingSounds[slot]->sound = snd;
 			CurrentPlayingSounds[slot]->length = length;
+			CurrentPlayingSounds[slot]->loop = heFlags & 1;
+			CurrentPlayingSounds[slot]->channel = heChannel;
 #ifndef NOSOUND
 			CurrentPlayingSounds[slot]->data = data;
-			//soundEnable();
 			CurrentPlayingSounds[slot]->soundid = slot;//soundPlaySample(data, SoundFormat_8Bit, length, rate, 127, 64, false, 0);
-			soundIO_PlaySound(slot, data, SoundFormat_8Bit, length, rate, 127, 64, false, 0);
+			soundIO_PlaySound(slot, data, SoundFormat_8Bit, length, rate, 127, 64, heFlags & 1, 0);
 #endif
 			CurrentPlayingSounds[slot]->starttime = getMillis();
 			CurrentPlayingSounds[slot]->endtime = CurrentPlayingSounds[slot]->starttime + (length * 1000) / rate;
@@ -441,11 +462,9 @@ void stopSound(int id)
 		{
 			if(CurrentPlayingSounds[i] != NULL)
 			{
-				if(CurrentPlayingSounds[i]->sound >= 8000)
+				if(CurrentPlayingSounds[i]->channel == (id - 10000))
 				{
 #ifndef NOSOUND
-					//if(!CurrentPlayingSounds[i]->streaming)
-					//soundKill(CurrentPlayingSounds[i]->soundid);
 					soundIO_StopSound(CurrentPlayingSounds[i]->soundid);
 					free(CurrentPlayingSounds[i]->data);
 #endif
@@ -463,8 +482,6 @@ void stopSound(int id)
 			if(CurrentPlayingSounds[i]->sound == id)
 			{
 #ifndef NOSOUND
-				//if(!CurrentPlayingSounds[i]->streaming)
-				//soundKill(CurrentPlayingSounds[i]->soundid);
 				soundIO_StopSound(CurrentPlayingSounds[i]->soundid);
 				free(CurrentPlayingSounds[i]->data);
 #endif
@@ -477,24 +494,22 @@ void stopSound(int id)
 
 int isSoundRunning(int id)
 {
-	//printf("isSoundRunning %d\n", id);
-	//if(id >= getSoundCount(HE0_File, &HE0_Data)) return 1;
 	if (id == 10000)
 	{
 		for(int i = 0; i < 16; i++)
 		{
 			if(CurrentPlayingSounds[i] != NULL)
 			{
-				if(CurrentPlayingSounds[i]->sound >= 8000)
+				if(CurrentPlayingSounds[i]->channel == (id - 10000))
 				{
-					if(CurrentPlayingSounds[i]->endtime <= getMillis()) return 0;
+					if(!CurrentPlayingSounds[i]->loop && CurrentPlayingSounds[i]->endtime <= getMillis()) return 0;
 					else return 1;
 				}
 			}
 		}
 		for (int i = 0; i <_soundQue2Pos; i++) 
 		{
-			if(_soundQue2[i].sound >= 8000) return 1;
+			if(_soundQue2[i].channel == (id - 10000)) return 1;
 		}
 		return 0;
 	}

@@ -84,7 +84,11 @@ void displayWizImage(WizImage *pwi) {
 	const Common::Rect *r = NULL;
 	drawWizImage(pwi->resNum, pwi->state, 0, 0, pwi->x1, pwi->y1, 0, 0, 0, r, pwi->flags, 0, _vm->getHEPaletteSlot(0));
 	}*/
-	//if(pwi->flags)
+	if(pwi->flags & kWIFIsPolygon)
+	{
+
+	}
+	else
 	{
 		uint32_t offs = getAWIZOffset(HE0_File, &HE0_Data, pwi->resNum);
 		//printf("displayWizImage: %d (Offs: 0x%X)\n", pwi->resNum, offs);
@@ -103,6 +107,7 @@ void processWizImage(const WizParameters *params) {
 	printf("processWizImage: processMode %d\n", params->processMode);
 	switch (params->processMode) {
 	case 0:
+		while(1);
 		// Used in racedemo
 		break;
 	case 1:
@@ -121,9 +126,11 @@ void processWizImage(const WizParameters *params) {
 		}
 		break;
 	case 2:
+		while(1);
 		//captureWizImage(params->img.resNum, params->box, (params->img.flags & kWIFBlitToFrontVideoBuffer) != 0, params->compType);
 		break;
 	case 3:
+		while(1);
 		/*if (params->processFlags & kWPFUseFile) {
 		Common::SeekableReadStream *f = NULL;
 		memcpy(buffer, params->filename, 260);
@@ -164,6 +171,7 @@ void processWizImage(const WizParameters *params) {
 		}*/
 		break;
 	case 4:
+		while(1);
 		/*if (params->processFlags & kWPFUseFile) {
 		Common::OutSaveFile *f;
 		memcpy(buffer, params->filename, 260);
@@ -199,13 +207,16 @@ void processWizImage(const WizParameters *params) {
 		}*/
 		break;
 	case 6:
+		while(1);
 		//remapWizImagePal(params);
 		break;
 		// HE 99+
 	case 7:
+		while(1);
 		//captureWizPolygon(params->img.resNum, params->sourceImage, (params->processFlags & kWPFNewState) ? params->img.state : 0, params->polygonId1, params->polygonId2, params->compType);
 		break;
 	case 8: {
+		while(1);
 		/*	int img_w = 640;
 		if (params->processFlags & kWPFUseDefImgWidth) {
 		img_w = params->resDefImgW;
@@ -227,34 +238,43 @@ void processWizImage(const WizParameters *params) {
 			}
 			break;
 	case 9:
+		while(1);
 		//fillWizRect(params);
 		break;
 	case 10:
+		while(1);
 		//fillWizLine(params);
 		break;
 	case 11:
+		while(1);
 		//fillWizPixel(params);
 		break;
 	case 12:
+		while(1);
 		//fillWizFlood(params);
 		break;
 	case 13:
+		while(1);
 		// Used for text in FreddisFunShop/PuttsFunShop/SamsFunShop
 		// TODO: Start Font
 		break;
 	case 14:
+		while(1);
 		// Used for text in FreddisFunShop/PuttsFunShop/SamsFunShop
 		// TODO: End Font
 		break;
 	case 15:
+		while(1);
 		// Used for text in FreddisFunShop/PuttsFunShop/SamsFunShop
 		// TODO: Create Font
 		break;
 	case 16:
 		// TODO: Render Font String
 		printf("Error: Render Font String\n");
+		while(1);
 		break;
 	case 17:
+		while(1);
 		// Used in to draw circles in FreddisFunShop/PuttsFunShop/SamsFunShop
 		// TODO: Ellipse
 		//_vm->_res->setModified(rtImage, params->img.resNum);
@@ -307,6 +327,14 @@ void loadWizCursor(int resId, int palette) {
 }
 
 WizPolygon _polygons[NUM_POLYGONS]; 
+
+void polygonClear()
+{
+	for (int i = 0; i < ARRAYSIZE(_polygons); i++) {
+		if (_polygons[i].flag == 1)
+			memset(&_polygons[i], 0, sizeof(WizPolygon));
+	}
+}
 
 void polygonStore(int id, bool flag, int vert1x, int vert1y, int vert2x, int vert2y, int vert3x, int vert3y, int vert4x, int vert4y)
 {
