@@ -12,7 +12,7 @@
 #include <objects.h>
 #include <sprite.h>
 
-void _0x45_CreateSound()
+static void _0x45_CreateSound()
 {
 	byte subOp = fetchScriptByte();
 
@@ -38,7 +38,7 @@ void _0x45_CreateSound()
 
 static int _LOL_TESTcurrent_level = 0;
 
-void _0x4D_ReadConfigFile()
+static void _0x4D_ReadConfigFile()
 {
 	byte option[128], section[128], filename[256];
 	byte *data;
@@ -130,7 +130,7 @@ void _0x4D_ReadConfigFile()
 	//swiDelay(5000000);
 }
 
-void _0x4E_WriteConfigFile()
+static void _0x4E_WriteConfigFile()
 {
 	byte filename[256], section[256], option[256], string[1024];
 	int r, value;
@@ -168,7 +168,7 @@ void _0x4E_WriteConfigFile()
 	printf("o80_writeConfigFile: Filename %s Section %s Option %s String %s\n", filename, section, option, string);
 } 
 
-void _0x6B_CursorCommand() {
+static void _0x6B_CursorCommand() {
 	int a, b, i;
 	int args[16];
 
@@ -234,7 +234,7 @@ void _0x6B_CursorCommand() {
 	VAR(VAR_USERPUT) = _userPut; 
 }
 
-void _0x70_SetState()
+static void _0x70_SetState()
 {
 	int state = pop();
 	int obj = pop();
@@ -244,7 +244,7 @@ void _0x70_SetState()
 	removeObjectFromDrawQue(obj); 
 }
 
-void _0xE3_PickVarRandom()
+static void _0xE3_PickVarRandom()
 {
 	int num;
 	int args[100];
@@ -291,4 +291,15 @@ void _0xE3_PickVarRandom()
 
 	writeArray(value, 0, 0, num + 1);
 	push(readArray(value, 0, num)); 
+}
+
+void setupHE80()
+{
+	setupHE72();
+	_opcodes[0x45] = _0x45_CreateSound;
+	_opcodes[0x4D] = _0x4D_ReadConfigFile;
+	_opcodes[0x4E] = _0x4E_WriteConfigFile;
+	_opcodes[0x6B] = _0x6B_CursorCommand;
+	_opcodes[0x70] = _0x70_SetState;
+	_opcodes[0xE3] = _0xE3_PickVarRandom;
 }

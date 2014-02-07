@@ -211,43 +211,6 @@ int findFreeSlot()
 	return 0;
 }
 
-byte streambufferA[11017];
-//byte streambufferB[11025];
-//bool B = false;
-//byte realstreambuffer[11025];
-uint32_t streamoffs;
-int streamslot = -1;
-bool Streaming = false;
-bool need = false;
-bool started;
-void RefreshStream()
-{
-	//memcpy(realstreambuffer, streambufferA, 11025);
-	//B = !B;
-	need = true;
-	/*fpos_t pos;
-	fgetpos(HE4_File, &pos);
-	fseek(HE4_File, streamoffs, SEEK_SET);
-	readSoundBytes(HE4_File, &streambuffer[0], 11025);
-	fsetpos(HE4_File, &pos);
-	streamoffs += 11025;*/
-}
-
-/*void ReadStream()
-{
-if(!Streaming || !need) return;
-fseek(HE4_File, streamoffs, SEEK_SET);
-readSoundBytes(HE4_File, &streambufferA[0], 11017);
-if(!started)
-{
-soundEnable();
-CurrentPlayingSounds[streamslot]->soundid = soundPlaySample(streambufferA, SoundFormat_8Bit, 11017, 11025, 127, 64, true, 0);
-started = true;
-}
-streamoffs += 11017;
-need = false;
-}*/
-
 void doSound()
 {
 	for(int i = 0; i < 16; i++)
@@ -261,14 +224,8 @@ void doSound()
 					stopTalk();
 					continue;
 				}
-#ifndef NOSOUND
-				//if(!CurrentPlayingSounds[i]->streaming)
 				soundIO_StopSound(CurrentPlayingSounds[i]->soundid);
-				//soundKill(CurrentPlayingSounds[i]->soundid);
-				//else
-
 				free(CurrentPlayingSounds[i]->data);
-#endif
 				free(CurrentPlayingSounds[i]);
 				CurrentPlayingSounds[i] = NULL;
 			}
@@ -312,12 +269,10 @@ void doSound()
 				CurrentPlayingSounds[slot]->length = length;
 				CurrentPlayingSounds[slot]->loop = false;
 				CurrentPlayingSounds[slot]->channel = heChannel;
-#ifndef NOSOUND
 				CurrentPlayingSounds[slot]->data = data;
 				//soundEnable();
 				CurrentPlayingSounds[slot]->soundid = slot;//soundPlaySample(data, SoundFormat_8Bit, length, rate, 127, 64, false, 0);
 				soundIO_PlaySound(slot, data, SoundFormat_8Bit, length, rate, 127, 64, false, 0);
-#endif
 				CurrentPlayingSounds[slot]->starttime = getMillis();
 				CurrentPlayingSounds[slot]->endtime = CurrentPlayingSounds[slot]->starttime + (length * 1000) / rate;
 			}
@@ -332,10 +287,8 @@ void doSound()
 					{
 						if(CurrentPlayingSounds[i]->channel == heChannel)
 						{
-#ifndef NOSOUND
 							soundIO_StopSound(CurrentPlayingSounds[i]->soundid);
 							free(CurrentPlayingSounds[i]->data);
-#endif
 							free(CurrentPlayingSounds[i]);
 							CurrentPlayingSounds[i] = NULL;
 						}
@@ -430,11 +383,9 @@ void doSound()
 			CurrentPlayingSounds[slot]->length = length;
 			CurrentPlayingSounds[slot]->loop = heFlags & 1;
 			CurrentPlayingSounds[slot]->channel = heChannel;
-#ifndef NOSOUND
 			CurrentPlayingSounds[slot]->data = data;
 			CurrentPlayingSounds[slot]->soundid = slot;//soundPlaySample(data, SoundFormat_8Bit, length, rate, 127, 64, false, 0);
 			soundIO_PlaySound(slot, data, SoundFormat_8Bit, length, rate, 127, 64, heFlags & 1, 0);
-#endif
 			CurrentPlayingSounds[slot]->starttime = getMillis();
 			CurrentPlayingSounds[slot]->endtime = CurrentPlayingSounds[slot]->starttime + (length * 1000) / rate;
 			//printf("Starttime: %d\n", CurrentPlayingSounds[slot]->starttime);
@@ -456,7 +407,26 @@ void doSound()
 
 void stopSound(int id)
 {
-	if (id == 10000)
+	if(id == 10002)
+	{
+		for(int i = 0; i < 16; i++)
+		{
+			if(CurrentPlayingSounds[i]->sound == -1) 
+			{
+				stopTalk();
+				continue;
+			}
+			else if(CurrentPlayingSounds[i]->channel == (id - 10000))
+			{
+					soundIO_StopSound(CurrentPlayingSounds[i]->soundid);
+					free(CurrentPlayingSounds[i]->data);
+					free(CurrentPlayingSounds[i]);
+					CurrentPlayingSounds[i] = NULL;
+			}
+		}
+		return;
+	}
+	if (id >= 10000)
 	{
 		for(int i = 0; i < 16; i++)
 		{
@@ -464,10 +434,8 @@ void stopSound(int id)
 			{
 				if(CurrentPlayingSounds[i]->channel == (id - 10000))
 				{
-#ifndef NOSOUND
 					soundIO_StopSound(CurrentPlayingSounds[i]->soundid);
 					free(CurrentPlayingSounds[i]->data);
-#endif
 					free(CurrentPlayingSounds[i]);
 					CurrentPlayingSounds[i] = NULL;
 				}
@@ -481,10 +449,8 @@ void stopSound(int id)
 		{
 			if(CurrentPlayingSounds[i]->sound == id)
 			{
-#ifndef NOSOUND
 				soundIO_StopSound(CurrentPlayingSounds[i]->soundid);
 				free(CurrentPlayingSounds[i]->data);
-#endif
 				free(CurrentPlayingSounds[i]);
 				CurrentPlayingSounds[i] = NULL;
 			}
@@ -494,7 +460,7 @@ void stopSound(int id)
 
 int isSoundRunning(int id)
 {
-	if (id == 10000)
+	if (id >= 10000)
 	{
 		for(int i = 0; i < 16; i++)
 		{

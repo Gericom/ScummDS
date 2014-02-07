@@ -27,12 +27,12 @@ int readFileToArray(int slot, int32 size)
 	return readVar(0);
 }
 
-void _0x02_PushDWord()
+static void _0x02_PushDWord()
 {
 	push(fetchScriptDWordSigned());
 }
 
-void _0x04_GetScriptString()
+static void _0x04_GetScriptString()
 {
 	byte chr;
 
@@ -48,7 +48,7 @@ void _0x04_GetScriptString()
 	_stringLength++;
 }
 
-void _0x1B_IsAnyOf()
+static void _0x1B_IsAnyOf()
 {
 	int args[128];
 	int num, value;
@@ -66,7 +66,7 @@ void _0x1B_IsAnyOf()
 	push(0);
 }
 
-void _0x50_ResetCutscene()
+static void _0x50_ResetCutscene()
 {
 	int idx;
 
@@ -78,7 +78,7 @@ void _0x50_ResetCutscene()
 	VAR(VAR_OVERRIDE) = 0;
 } 
 
-void _0x58_GetTimer()
+static void _0x58_GetTimer()
 {
 	int timer = pop();
 	byte cmd = fetchScriptByte();
@@ -90,7 +90,7 @@ void _0x58_GetTimer()
 	}
 }
 
-void _0x59_SetTimer()
+static void _0x59_SetTimer()
 {
 	int timer = pop();
 	byte cmd = fetchScriptByte();
@@ -102,13 +102,13 @@ void _0x59_SetTimer()
 	} 
 }
 
-void _0x5A_GetSoundPosition()
+static void _0x5A_GetSoundPosition()
 {
 	int snd = pop();
 	push(/*((SoundHE *)_sound)->getSoundPos(snd)*/0);
 }
 
-void _0x5E_StartScript()
+static void _0x5E_StartScript()
 {
 	int args[25];
 	int script;
@@ -121,7 +121,7 @@ void _0x5E_StartScript()
 	runScript(script, (flags == 199 || flags == 200), (flags == 195 || flags == 200), args); 
 }
 
-void _0x60_StartObject()
+static void _0x60_StartObject()
 {
 	int args[25];
 	int script, entryp;
@@ -134,7 +134,7 @@ void _0x60_StartObject()
 	runObjectScript(script, entryp, (flags == 199 || flags == 200), (flags == 195 || flags == 200), args);
 }
 
-void _0x61_DrawObject()
+static void _0x61_DrawObject()
 {
 	byte subOp = fetchScriptByte();
 	int state, y, x;
@@ -177,7 +177,7 @@ void _0x61_DrawObject()
 	}
 }
 
-void _0x64_GetNumFreeArrays()
+static void _0x64_GetNumFreeArrays()
 {
 	int i, num = 0;
 
@@ -189,7 +189,7 @@ void _0x64_GetNumFreeArrays()
 	push(num);
 }
 
-void _0x9C_RoomOps()
+static void _0x9C_RoomOps()
 {
 	int a, b, c, d, e;
 
@@ -302,7 +302,7 @@ void _0x9C_RoomOps()
 	} 
 }
 
-void _0x9D_ActorOps()
+static void _0x9D_ActorOps()
 {
 	Actor* a;
 	int i, j, k;
@@ -512,7 +512,7 @@ void _0x9D_ActorOps()
 	}
 }
 
-void _0xA0_FindObject() 
+static void _0xA0_FindObject() 
 {
 	int y = pop();
 	int x = pop();
@@ -520,7 +520,7 @@ void _0xA0_FindObject()
 	push(r);
 } 
 
-void _0xA4_ArrayOps()
+static void _0xA4_ArrayOps()
 {
 	byte *data;
 	byte string[1024];
@@ -644,7 +644,7 @@ void _0xA4_ArrayOps()
 	}
 }
 
-void _0xAE_SystemOps()
+static void _0xAE_SystemOps()
 {
 	byte string[1024];
 
@@ -698,7 +698,7 @@ void _0xAE_SystemOps()
 	}
 }
 
-void _0xBA_TalkActor()
+static void _0xBA_TalkActor()
 {
 	Actor *a;
 
@@ -726,13 +726,13 @@ void _0xBA_TalkActor()
 	_scriptPointer += resStrLen(_scriptPointer) + 1;
 }
 
-void _0xBB_TalkEgo()
+static void _0xBB_TalkEgo()
 {
 	push(VAR(VAR_EGO));
 	_0xBA_TalkActor();
 } 
 
-void _0xBC_DimArray()
+static void _0xBC_DimArray()
 {
 	int data;
 
@@ -767,7 +767,7 @@ void _0xBC_DimArray()
 	defineArray(fetchScriptWord(), data, 0, 0, 0, pop());
 }
 
-void _0xC0_Dim2DimArray()
+static void _0xC0_Dim2DimArray()
 {
 	int data, dim1end, dim2end;
 
@@ -801,7 +801,7 @@ void _0xC0_Dim2DimArray()
 	defineArray(fetchScriptWord(), data, 0, dim2end, 0, dim1end); 
 }
 
-void _0xC1_TraceStatus()
+static void _0xC1_TraceStatus()
 {
 	byte string[80];
 
@@ -809,7 +809,7 @@ void _0xC1_TraceStatus()
 	pop();
 } 
 
-void _0xCE_DrawWizImage() {
+static void _0xCE_DrawWizImage() {
 	WizImage wi;
 	wi.flags = pop();
 	wi.y1 = pop();
@@ -819,7 +819,7 @@ void _0xCE_DrawWizImage() {
 	displayWizImage(&wi);
 }
 
-void _0xD5_JumpToScript()
+static void _0xD5_JumpToScript()
 {
 	int args[25];
 	int script;
@@ -833,7 +833,7 @@ void _0xD5_JumpToScript()
 }
 
 
-void _0xDA_OpenFile()
+static void _0xDA_OpenFile()
 {
 	int mode, slot, i;
 	byte buffer[256];
@@ -919,7 +919,7 @@ void _0xDA_OpenFile()
 	//swiDelay(5000000);
 }
 
-void _0xDB_ReadFile()
+static void _0xDB_ReadFile()
 {
 	int slot;
 	int32 size;
@@ -987,7 +987,7 @@ void _0xDB_ReadFile()
 	}
 } 
 
-void _0xDD_FindAllObjects()
+static void _0xDD_FindAllObjects()
 {
 	int room = pop();
 	int i;
@@ -1006,7 +1006,7 @@ void _0xDD_FindAllObjects()
 	push(readVar(0));
 }
 
-void _0xDE_DeleteFile()
+static void _0xDE_DeleteFile()
 {
 	byte buffer[256];
 
@@ -1020,7 +1020,7 @@ void _0xDE_DeleteFile()
 	//}
 }
 
-void _0xE1_GetPixel()
+static void _0xE1_GetPixel()
 {
 	uint16 area;
 
@@ -1057,7 +1057,7 @@ void _0xE1_GetPixel()
 	push(area);*/
 } 
 
-void _0xEA_RedimArray()
+static void _0xEA_RedimArray()
 {
 	int newX, newY;
 	newY = pop();
@@ -1080,7 +1080,7 @@ void _0xEA_RedimArray()
 	}
 } 
 
-void _0xF3_ReadINI()
+static void _0xF3_ReadINI()
 {
 	byte option[128];
 	byte *data;
@@ -1152,7 +1152,7 @@ void _0xF3_ReadINI()
 	//while(1);
 }
 
-void _0xF4_WriteINI()
+static void _0xF4_WriteINI()
 {
 	int value;
 	byte option[256], string[1024];
@@ -1195,7 +1195,7 @@ void _0xF4_WriteINI()
 	//ConfMan.flushToDisk(); 
 }
 
-void _0xF8_GetResourceSize()
+static void _0xF8_GetResourceSize()
 {
 	const byte *ptr;
 	int size;
@@ -1235,7 +1235,7 @@ void _0xF8_GetResourceSize()
 	push(0);//push(size);
 }
 
-void _0xF9_CreateDirectory()
+static void _0xF9_CreateDirectory()
 {
 	byte directoryName[255];
 
@@ -1243,7 +1243,7 @@ void _0xF9_CreateDirectory()
 	printf("o72_createDirectory: %s\n", directoryName);
 }
 
-void _0xFA_SetSystemMessage()
+static void _0xFA_SetSystemMessage()
 {
 	byte name[1024];
 
@@ -1266,4 +1266,43 @@ void _0xFA_SetSystemMessage()
 	default:
 		printf("Error: o72_setSystemMessage: default case %d\n", subOp);
 	}
+}
+
+void setupHE72()
+{
+	setupHE71();
+	_opcodes[0x02] = _0x02_PushDWord;
+	_opcodes[0x04] = _0x04_GetScriptString;
+	_opcodes[0x1B] = _0x1B_IsAnyOf;
+	_opcodes[0x50] = _0x50_ResetCutscene;
+	_opcodes[0x58] = _0x58_GetTimer;
+	_opcodes[0x59] = _0x59_SetTimer;
+	_opcodes[0x5A] = _0x5A_GetSoundPosition;
+	_opcodes[0x5E] = _0x5E_StartScript;
+	_opcodes[0x60] = _0x60_StartObject;
+	_opcodes[0x61] = _0x61_DrawObject;
+	_opcodes[0x64] = _0x64_GetNumFreeArrays;
+	_opcodes[0x9C] = _0x9C_RoomOps;
+	_opcodes[0x9D] = _0x9D_ActorOps;
+	_opcodes[0xA0] = _0xA0_FindObject;
+	_opcodes[0xA4] = _0xA4_ArrayOps;
+	_opcodes[0xAE] = _0xAE_SystemOps;
+	_opcodes[0xBA] = _0xBA_TalkActor;
+	_opcodes[0xBB] = _0xBB_TalkEgo;
+	_opcodes[0xBC] = _0xBC_DimArray;
+	_opcodes[0xC0] = _0xC0_Dim2DimArray;
+	_opcodes[0xC1] = _0xC1_TraceStatus;
+	_opcodes[0xCE] = _0xCE_DrawWizImage;
+	_opcodes[0xD5] = _0xD5_JumpToScript;
+	_opcodes[0xDA] = _0xDA_OpenFile;
+	_opcodes[0xDB] = _0xDB_ReadFile;
+	_opcodes[0xDD] = _0xDD_FindAllObjects;
+	_opcodes[0xDE] = _0xDE_DeleteFile;
+	_opcodes[0xE1] = _0xE1_GetPixel;
+	_opcodes[0xEA] = _0xEA_RedimArray;
+	_opcodes[0xF3] = _0xF3_ReadINI;
+	_opcodes[0xF4] = _0xF4_WriteINI;
+	_opcodes[0xF8] = _0xF8_GetResourceSize;
+	_opcodes[0xF9] = _0xF9_CreateDirectory;
+	_opcodes[0xFA] = _0xFA_SetSystemMessage;
 }

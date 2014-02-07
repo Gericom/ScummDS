@@ -12,12 +12,12 @@
 #include <objects.h>
 #include <sprite.h>
 
-void _0xBD_StopObjectCode()
+static void _0xBD_StopObjectCode()
 {
 	stopObjectCode();
 }
 
-void _0xD9_CloseFile()
+static void _0xD9_CloseFile()
 {
 	int slot = pop();
 	printf("CloseFile (%d)\n", slot);
@@ -29,14 +29,14 @@ void _0xD9_CloseFile()
 	}
 }
 
-void _0xE2_LocalizeArrayToScript()
+static void _0xE2_LocalizeArrayToScript()
 {
 	int slot = pop();
 	printf("localizeArray (%d)\n", slot);
 	//localizeArray(slot, _currentScript);
 }
 
-void _0xE9_SeekFilePos()
+static void _0xE9_SeekFilePos()
 {
 	int mode, offset, slot;
 
@@ -64,4 +64,13 @@ void _0xE9_SeekFilePos()
 	default:
 		printf("Error: o60_seekFilePos: default case %d\n", mode);
 	}
+}
+
+void setupHE60()
+{
+	setupScumm6();
+	_opcodes[0xBD] = _0xBD_StopObjectCode;
+	_opcodes[0xD9] = _0xD9_CloseFile;
+	_opcodes[0xE2] = _0xE2_LocalizeArrayToScript;
+	_opcodes[0xE9] = _0xE9_SeekFilePos;
 }

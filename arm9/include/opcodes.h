@@ -1,6 +1,14 @@
 #ifndef __OPCODES_H__
 #define __OPCODES_H__
 
+void setupScumm6();
+void setupHE60();
+void setupHE70();
+void setupHE71();
+void setupHE72();
+void setupHE80();
+void setupHE90();
+
 int getStackList(int *args, uint maxnum);
 void copyScriptString(byte *dst, int dstSize);
 int popRoomAndObj(int *room);
@@ -29,7 +37,7 @@ void appendSubstring(int dst, int src, int srcOffs, int len);
 //HE72
 int readFileToArray(int slot, int32 size);
 
-void _0x00_PushByte();
+/*void _0x00_PushByte();
 void _0x01_PushWord();
 void _0x02_PushDWord();
 void _0x03_PushWordVar();
@@ -180,6 +188,6 @@ void _0xF8_GetResourceSize();
 void _0xF9_CreateDirectory();
 void _0xFA_SetSystemMessage();
 void _0xFB_PolygonOps();
-void _0xFC_PolygonHit();
+void _0xFC_PolygonHit();*/
 
 #endif

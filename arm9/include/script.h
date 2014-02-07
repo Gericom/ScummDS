@@ -189,6 +189,8 @@ extern ArrayHeader* _arrays[8192];
 //extern void* mallocs[1024];
 //extern int mallocsoffset;
 
+extern VoidFn _opcodes[256];
+
 #define VAR(x)	_scummVars[x]
 
 void runScript(int script, bool freezeResistant, bool recursive, int *lvarptr, int cycle = 0);
@@ -204,6 +206,7 @@ void getScriptBaseAddress();
 void resetScriptPointer();
 void refreshScriptPointer();
 void executeScript();
+void unknownOpcode();
 byte fetchScriptByte();
 uint16 fetchScriptWord();
 int16 fetchScriptWordSigned();

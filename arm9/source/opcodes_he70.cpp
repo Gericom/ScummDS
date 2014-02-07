@@ -12,7 +12,7 @@
 #include <objects.h>
 #include <sprite.h>
 
-void _0x74_StartSound()
+static void _0x74_StartSound()
 {
 	int var, value;
 
@@ -69,7 +69,7 @@ void _0x74_StartSound()
 	} 
 }
 
-void _0x8C_GetActorRoom()
+static void _0x8C_GetActorRoom()
 {
 	int act = pop();
 
@@ -96,7 +96,7 @@ void _0x8C_GetActorRoom()
 	push(a->_room); 
 }
 
-void _0x9B_ResourceRoutines()
+static void _0x9B_ResourceRoutines()
 {
 	int objidx, resid;
 
@@ -268,7 +268,7 @@ void _0x9B_ResourceRoutines()
 	}
 }
 
-void _0xEE_GetStringLength()
+static void _0xEE_GetStringLength()
 {
 	int id, len;
 	byte *addr;
@@ -283,7 +283,7 @@ void _0xEE_GetStringLength()
 	push(len); 
 }
 
-void _0xF2_IsResourceLoaded() {
+static void _0xF2_IsResourceLoaded() {
 	// Reports percentage of resource loaded by queue
 	//ResType type;
 
@@ -313,3 +313,13 @@ void _0xF2_IsResourceLoaded() {
 
 	push(100);
 } 
+
+void setupHE70()
+{
+	setupHE60();
+	_opcodes[0x74] = _0x74_StartSound;
+	_opcodes[0x8C] = _0x8C_GetActorRoom;
+	_opcodes[0x9B] = _0x9B_ResourceRoutines;
+	_opcodes[0xEE] = _0xEE_GetStringLength;
+	_opcodes[0xF2] = _0xF2_IsResourceLoaded;
+}

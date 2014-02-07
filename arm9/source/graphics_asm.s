@@ -1,3 +1,5 @@
+.section .itcm
+
 .global Merge4Pixels
 Merge4Pixels:
 	push {r4-r7}
@@ -30,8 +32,6 @@ Merge4Pixels:
 
 .extern writeRoomColor
 .extern FILL_BITS_he
-
-@.extern debugwait
 
 @void drawStripHE_asm(FILE* handle, LFLF_t* Room, byte *dst, int height, int width, int dstPitch, int transpColor, int _decomp_shr, int _decomp_mask)
 @r0 = r4 = FILE* handle

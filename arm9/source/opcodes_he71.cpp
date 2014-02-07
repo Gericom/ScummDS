@@ -38,7 +38,7 @@ void appendSubstring(int dst, int src, int srcOffs, int len)
 	writeArray(0, 0, dstOffs + i, 0);
 }
 
-/*void _0xEC_CopyString()
+/*static void _0xEC_CopyString()
 {
 	int dst, size;
 	int src = pop();
@@ -51,7 +51,7 @@ void appendSubstring(int dst, int src, int srcOffs, int len)
 	push(dst);
 } */
 
-void _0xEF_AppendString()
+static void _0xEF_AppendString()
 {
 	int dst, size;
 
@@ -67,7 +67,7 @@ void _0xEF_AppendString()
 	push(dst);
 }
 
-void _0xF1_CompareString()
+static void _0xF1_CompareString()
 {
 	int result;
 
@@ -96,7 +96,7 @@ void _0xF1_CompareString()
 	push(result);
 }
 
-void _0xF6_GetCharIndexInString()
+static void _0xF6_GetCharIndexInString()
 {
 	int array, end, len, pos, value;
 
@@ -139,7 +139,7 @@ void _0xF6_GetCharIndexInString()
 }
  
 
-void _0xFB_PolygonOps()
+static void _0xFB_PolygonOps()
 {
 	int vert1x, vert1y, vert2x, vert2y, vert3x, vert3y, vert4x, vert4y;
 	int id, fromId, toId;
@@ -175,9 +175,19 @@ void _0xFB_PolygonOps()
 	} 
 }
 
-void _0xFC_PolygonHit()
+static void _0xFC_PolygonHit()
 {
 	int y = pop();
 	int x = pop();
 	push(polygonHit(0, x, y));
 } 
+
+void setupHE71()
+{
+	setupHE70();
+	_opcodes[0xEF] = _0xEF_AppendString;
+	_opcodes[0xF1] = _0xF1_CompareString;
+	_opcodes[0xF6] = _0xF6_GetCharIndexInString;
+	_opcodes[0xFB] = _0xFB_PolygonOps;
+	_opcodes[0xFC] = _0xFC_PolygonHit;
+}

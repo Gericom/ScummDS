@@ -49,7 +49,7 @@ static bool init = false;
 int numactors;
 
 //640x480 -> 320x240 -> 512x256
-void RenderFrame()
+ITCM_CODE void RenderFrame()
 {
 	for(int i = 0; i < 240; i++)
 	{
@@ -118,12 +118,10 @@ void RenderFrame()
 		Actor** end = _sortedActors + numactors;
 		for (Actor** ac = _sortedActors; ac != end; ++ac) {
 			Actor* a = *ac;
-
-			//if (a->_costume && a->_cost.AKOS != NULL) {
-				renderCostume(a);
-				//a->drawActorCostume();
-				//a->animateCostume();
-			//}
+			if(getTalkingActor() == a->_number && !_string[0].no_talk_anim)
+				setTalkCondition(a, (rand() % 10) + 1);
+			else setTalkCondition(a, 1);
+			renderCostume(a);
 		} 
 
 	}

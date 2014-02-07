@@ -20,23 +20,16 @@ struct AKOS_t
 	uint8_t AKPL[64];
 	bool HasRGBS;
 	uint8_t	RGBS[256 * 3];
-	//void* RGBS;
-	//uint32_t AKSQLength;
-	//fpos_t AKSQOffset;
 	void* AKSQ;
-	//void* AKCH;
 	fpos_t AKCHOffset;
 	fpos_t AKOFOffset;
-	//void* AKOF;
 	fpos_t AKCIOffset;
-	//void* AKCI;
 	fpos_t AKCDOffset;
-	//void* AKCD;
-	//fpos_t AKCTOffset;
+	fpos_t AKCTOffset;
 	uint32_t AKSTLength;
-	//void* AKST;
-	//uint32_t AKSFLength;
-	//void* AKSF;
+	fpos_t AKSTOffset;
+	uint32_t AKSFLength;
+	fpos_t AKSFOffset;
 };
 
 void freeAKOS(AKOS_t* AKOS);

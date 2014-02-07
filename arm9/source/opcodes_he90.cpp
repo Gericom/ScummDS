@@ -12,7 +12,7 @@
 #include <objects.h>
 #include <sprite.h>
 
-void _0x0A_Dup_n()
+static void _0x0A_Dup_n()
 {
 	int num;
 	int args[16];
@@ -26,7 +26,7 @@ void _0x0A_Dup_n()
 	}
 }
 
-void _0x1C_WizImageOps()
+static void _0x1C_WizImageOps()
 {
 	int a, b;
 
@@ -275,7 +275,7 @@ void _0x1C_WizImageOps()
 	} 
 }
 
-void _0x1D_Min()
+static void _0x1D_Min()
 {
 	int a = pop();
 	int b = pop();
@@ -287,7 +287,7 @@ void _0x1D_Min()
 	}
 }
 
-void _0x1E_Max()
+static void _0x1E_Max()
 {
 	int a = pop();
 	int b = pop();
@@ -299,7 +299,7 @@ void _0x1E_Max()
 	}
 }
 
-void _0x22_ATan2()
+static void _0x22_ATan2()
 {
 	int y = pop();
 	int x = pop();
@@ -310,7 +310,7 @@ void _0x22_ATan2()
 	push(/*a*/0);
 }
 
-void _0x25_GetSpriteInfo()
+static void _0x25_GetSpriteInfo()
 {
 	int args[16];
 	int spriteId, flags, groupId, type;
@@ -565,7 +565,7 @@ void _0x25_GetSpriteInfo()
 	}
 }
 
-void _0x26_SetSpriteInfo()
+static void _0x26_SetSpriteInfo()
 {
 	int args[16];
 	int spriteId;
@@ -899,7 +899,7 @@ void _0x26_SetSpriteInfo()
 	}
 }
 
-void _0x27_GetSpriteGroupInfo()
+static void _0x27_GetSpriteGroupInfo()
 {
 	int32 tx, ty;
 	int spriteGroupId, type;
@@ -981,7 +981,7 @@ void _0x27_GetSpriteGroupInfo()
 	}
 }
 
-void _0x28_SetSpriteGroupInfo() 
+static void _0x28_SetSpriteGroupInfo() 
 {
 	int type, value1, value2, value3, value4;
 
@@ -1134,7 +1134,7 @@ void _0x28_SetSpriteGroupInfo()
 	}
 } 
 
-void _0x29_GetWizData()
+static void _0x29_GetWizData()
 {
 	byte filename[4096];
 	int resId, state, type;
@@ -1218,7 +1218,7 @@ void _0x29_GetWizData()
 	}
 }
 
-void _0x2B_StartScriptUnk()
+static void _0x2B_StartScriptUnk()
 {
 	int args[25];
 	int script, cycle;
@@ -1231,7 +1231,7 @@ void _0x2B_StartScriptUnk()
 	runScript(script, (flags == 199 || flags == 200), (flags == 195 || flags == 200), args, cycle);
 }
 
-void _0x34_FindAllObjectsWithClassOf() {
+static void _0x34_FindAllObjectsWithClassOf() {
 	int args[16];
 	int cond, num, cls, tmp;
 	bool b;
@@ -1266,7 +1266,7 @@ void _0x34_FindAllObjectsWithClassOf() {
 	push(readVar(0));
 } 
 
-void _0x37_Dim2Dim2Array()
+static void _0x37_Dim2Dim2Array()
 {
 	int data, dim1start, dim1end, dim2start, dim2end; 
 
@@ -1310,7 +1310,7 @@ void _0x37_Dim2Dim2Array()
 	defineArray(fetchScriptWord(), data, dim2start, dim2end, dim1start, dim1end); 
 }
 
-void _0x39_GetLinesIntersectionPoint() 
+static void _0x39_GetLinesIntersectionPoint() 
 {
 	int var_ix = fetchScriptWord();
 	int var_iy = fetchScriptWord();
@@ -1430,7 +1430,7 @@ void _0x39_GetLinesIntersectionPoint()
 	push(result);
 } 
 
-void _0x3A_SortArray() {
+static void _0x3A_SortArray() {
 	byte subOp = fetchScriptByte();
 
 	switch (subOp) {
@@ -1452,7 +1452,7 @@ void _0x3A_SortArray() {
 	}
 } 
 
-void _0x9E_PaletteOps() 
+static void _0x9E_PaletteOps() 
 {
 	int a, b, c, d, e;
 
@@ -1524,7 +1524,7 @@ void _0x9E_PaletteOps()
 	}
 } 
 
-void _0xA5_FontUnk() {
+static void _0xA5_FontUnk() {
 	// Font related
 	byte string[80];
 	int a;
@@ -1557,7 +1557,7 @@ void _0xA5_FontUnk() {
 	printf("o90_fontUnk stub (%d)\n", subOp);
 } 
 
-void _0xC9_KernelSetFunctions()
+static void _0xC9_KernelSetFunctions()
 {
 	int args[29];
 	int num, tmp;
@@ -1624,4 +1624,27 @@ void _0xC9_KernelSetFunctions()
 	default:
 		printf("Error: o90_kernelSetFunctions: default case %d (param count %d)\n", args[0], num);
 	}
+}
+
+void setupHE90()
+{
+	setupHE80();
+	_opcodes[0x0A] = _0x0A_Dup_n;
+	_opcodes[0x1C] = _0x1C_WizImageOps;
+	_opcodes[0x1D] = _0x1D_Min;
+	_opcodes[0x1E] = _0x1E_Max;
+	_opcodes[0x22] = _0x22_ATan2;
+	_opcodes[0x25] = _0x25_GetSpriteInfo;
+	_opcodes[0x26] = _0x26_SetSpriteInfo;
+	_opcodes[0x27] = _0x27_GetSpriteGroupInfo;
+	_opcodes[0x28] = _0x28_SetSpriteGroupInfo;
+	_opcodes[0x29] = _0x29_GetWizData;
+	_opcodes[0x2B] = _0x2B_StartScriptUnk;
+	_opcodes[0x34] = _0x34_FindAllObjectsWithClassOf;
+	_opcodes[0x37] = _0x37_Dim2Dim2Array;
+	_opcodes[0x39] = _0x39_GetLinesIntersectionPoint;
+	_opcodes[0x3A] = _0x3A_SortArray;
+	_opcodes[0x9E] = _0x9E_PaletteOps;
+	_opcodes[0xA5] = _0xA5_FontUnk;
+	_opcodes[0xC9] = _0xC9_KernelSetFunctions;
 }

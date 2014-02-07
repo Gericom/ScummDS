@@ -132,11 +132,12 @@ AKOS_t* readAKOS()
 	fgetpos(HE1_File, &pos);
 	uint32_t end = pos + SWAP_CONSTANT_32(size) - 8;
 	AKOS_t* AKOS = (AKOS_t*)malloc(sizeof(AKOS_t));
+	memset(AKOS, 0, sizeof(AKOS_t));
 	//AKOS->AKPL = NULL;
 	//AKOS->RGBS = NULL;
 	//AKOS->AKST = NULL;
 	//AKOS->AKCTOffset = 0;
-	memset(AKOS->RGBS, 0, sizeof(AKOS->RGBS));
+	//memset(AKOS->RGBS, 0, sizeof(AKOS->RGBS));
 	AKOS->HasRGBS = false;
 	while(pos < (end - 4))
 	{
@@ -189,20 +190,25 @@ AKOS_t* readAKOS()
 			fgetpos(HE1_File, &AKOS->AKCDOffset);
 			fseek(HE1_File, SWAP_CONSTANT_32(size) - 8, SEEK_CUR);
 			break;
-			//case MKTAG('A', 'K', 'C', 'T'):
-			//	fgetpos(HE1_File, &AKOS->AKCTOffset);
-			//	fseek(HE1_File, SWAP_CONSTANT_32(size) - 8, SEEK_CUR);
-			//	break;
-			//case MKTAG('A', 'K', 'S', 'T'):
-			//	AKOS->AKSTLength = SWAP_CONSTANT_32(size) - 8;
-			//	AKOS->AKST = malloc(SWAP_CONSTANT_32(size) - 8);
-			//	readBytes(HE1_File, (uint8_t*)AKOS->AKST, SWAP_CONSTANT_32(size) - 8);
-			//	break;
-			//case MKTAG('A', 'K', 'S', 'F'):
-			//	AKOS->AKSFLength = SWAP_CONSTANT_32(size) - 8;
-			//	AKOS->AKSF = malloc(SWAP_CONSTANT_32(size) - 8);
-			//	readBytes(HE1_File, (uint8_t*)AKOS->AKSF, SWAP_CONSTANT_32(size) - 8);
-			//	break;
+		case MKTAG('A', 'K', 'C', 'T'):
+			fgetpos(HE1_File, &AKOS->AKCTOffset);
+			fseek(HE1_File, SWAP_CONSTANT_32(size) - 8, SEEK_CUR);
+			break;
+		case MKTAG('A', 'K', 'S', 'T'):
+			AKOS->AKSTLength = SWAP_CONSTANT_32(size) - 8;
+			fgetpos(HE1_File, &AKOS->AKSTOffset);
+			fseek(HE1_File, SWAP_CONSTANT_32(size) - 8, SEEK_CUR);
+			//AKOS->AKSTLength = SWAP_CONSTANT_32(size) - 8;
+			//AKOS->AKST = malloc(SWAP_CONSTANT_32(size) - 8);
+			//readBytes(HE1_File, (uint8_t*)AKOS->AKST, SWAP_CONSTANT_32(size) - 8);
+			break;
+		case MKTAG('A', 'K', 'S', 'F'):
+			AKOS->AKSFLength = SWAP_CONSTANT_32(size) - 8;
+			fgetpos(HE1_File, &AKOS->AKSFOffset);
+			fseek(HE1_File, SWAP_CONSTANT_32(size) - 8, SEEK_CUR);
+			//AKOS->AKSF = malloc(SWAP_CONSTANT_32(size) - 8);
+			//readBytes(HE1_File, (uint8_t*)AKOS->AKSF, SWAP_CONSTANT_32(size) - 8);
+			break;
 		default:
 			//printf("Unknown Signature\n");
 			fseek(HE1_File, SWAP_CONSTANT_32(size) - 8, SEEK_CUR);
@@ -291,7 +297,33 @@ void costumeDecodeData(Actor *a, int frame, uint usemask)
 					a->_cost.curpos[i] = 0;
 					a->_cost.heCondMaskTable[i] = 0;
 
-					if (akst) {
+					if(AKOS->AKSTOffset != 0)
+					{
+						fpos_t curpos;
+						fgetpos(HE1_File, &curpos);
+						fseek(HE1_File, AKOS->AKSTOffset, SEEK_SET);
+						int size = AKOS->AKSTLength / 8;
+						if (size > 0) {
+							bool found = false;
+							while (size--) {
+								uint32_t tmp;
+								readU32LE(HE1_File, &tmp);
+								if (/*(akst[0] | akst[1] << 8 | akst[2] << 16 | akst[3] << 24)*/tmp == 0) {
+									//a->_cost.heCondMaskTable[i] = (akst[4] | akst[5] << 8 | akst[6] << 16 | akst[7] << 24);//READ_LE_UINT32(akst + 4);
+									readU32LE(HE1_File, &a->_cost.heCondMaskTable[i]);
+									found = true;
+									break;
+								}
+								//akst += 8;
+							}
+							if (!found) {
+								printf("Error: Sequence not found in actor %p costume %d\n", (void *)a, a->_costume);
+							}
+						}
+						fseek(HE1_File, curpos, SEEK_SET);
+					}
+
+					/*if (akst) {
 						int size = AKOS->AKSTLength / 8;
 						if (size > 0) {
 							bool found = false;
@@ -307,7 +339,7 @@ void costumeDecodeData(Actor *a, int frame, uint usemask)
 								printf("Error: Sequence not found in actor %p costume %d\n", (void *)a, a->_costume);
 							}
 						}
-					}
+					}*/
 					break;
 				case 4:
 					a->_cost.stopped |= 1 << i;
@@ -331,6 +363,35 @@ void costumeDecodeData(Actor *a, int frame, uint usemask)
 
 					a->_cost.heJumpOffsetTable[i] = 0;
 					a->_cost.heJumpCountTable[i] = 0;
+
+					if(AKOS->AKSFOffset != 0)
+					{
+						fpos_t curpos;
+						fgetpos(HE1_File, &curpos);
+						fseek(HE1_File, AKOS->AKSFOffset, SEEK_SET);
+						int size = AKOS->AKSFLength / 6;
+						if (size > 0) {
+							bool found = false;
+							while (size--) {
+								uint16_t tmp;
+								readU16LE(HE1_File, &tmp);
+								if (/*(aksf[0] | aksf[1] << 8)*/tmp == start) {
+									//a->_cost.heJumpOffsetTable[i] = (aksf[2] | aksf[3] << 8);
+									//a->_cost.heJumpCountTable[i] =  (aksf[4] | aksf[5] << 8);
+									readU16LE(HE1_File, &a->_cost.heJumpOffsetTable[i]);
+									readU16LE(HE1_File, &a->_cost.heJumpCountTable[i]);
+									found = true;
+									break;
+								}
+								//aksf += 6;
+							}
+							if (!found) {
+								printf("Error: Sequence not found in actor %p costume %d\n", (void *)a, a->_costume);
+							}
+						}
+						fseek(HE1_File, curpos, SEEK_SET);
+					}
+
 					/*if (aksf) {
 					int size = AKOS->AKSFLength / 6;
 					if (size > 0) {
@@ -356,7 +417,34 @@ void costumeDecodeData(Actor *a, int frame, uint usemask)
 					a->_cost.start[i] = start;
 					a->_cost.curpos[i] = start;
 					a->_cost.heCondMaskTable[i] = 0;
-					if (akst) {
+
+					if(AKOS->AKSTOffset != 0)
+					{
+						fpos_t curpos;
+						fgetpos(HE1_File, &curpos);
+						fseek(HE1_File, AKOS->AKSTOffset, SEEK_SET);
+						int size = AKOS->AKSTLength / 8;
+						if (size > 0) {
+							bool found = false;
+							while (size--) {
+								uint32_t tmp;
+								readU32LE(HE1_File, &tmp);
+								if (/*(akst[0] | akst[1] << 8 | akst[2] << 16 | akst[3] << 24)*/tmp == start) {
+									//a->_cost.heCondMaskTable[i] = (akst[4] | akst[5] << 8 | akst[6] << 16 | akst[7] << 24);//READ_LE_UINT32(akst + 4);
+									readU32LE(HE1_File, &a->_cost.heCondMaskTable[i]);
+									found = true;
+									break;
+								}
+								//akst += 8;
+							}
+							if (!found) {
+								printf("Error: Sequence not found in actor %p costume %d\n", (void *)a, a->_costume);
+							}
+						}
+						fseek(HE1_File, curpos, SEEK_SET);
+					}
+
+					/*if (akst) {
 						int size = AKOS->AKSTLength / 8;
 						if (size > 0) {
 							bool found = false;
@@ -372,7 +460,7 @@ void costumeDecodeData(Actor *a, int frame, uint usemask)
 								printf("Error: Sequence not found in actor %p costume %d\n", (void *)a, a->_costume);
 							}
 						}
-					}
+					}*/
 					break;
 				}
 			} else {
@@ -1223,7 +1311,7 @@ bool akos_increaseAnim(Actor *a, int chan) {
 //	a->_cost.AKOS = AKOS;
 //}
 //
-void renderCostume(Actor* a, bool render)
+ITCM_CODE void renderCostume(Actor* a, bool render)
 {
 	if(!render && (a->_animProgress + 1) < a->_animSpeed)
 	{
@@ -1273,10 +1361,10 @@ void renderCostume(Actor* a, bool render)
 	//lastDy = a->_cost.lastDy[limb];
 	//}
 
-	/*for (int i = 0; i < 32; i++)
+	for (int i = 0; i < 32; i++)
 	{
-	heCondMaskIndex[i] = i;
-	} */
+		heCondMaskIndex[i] = i;
+	}
 
 	//printf("Draw!\n");
 
@@ -1357,8 +1445,8 @@ _0xC020:
 						code = (ushort)((code << 8) | *(seq + 5));
 					int offset = code & 0xFFF;
 
-					x = xmove + (int16)(seq[0] | seq[1] << 8);// + a->x;
-					y = ymove + (int16)(seq[2] | seq[3] << 8) - a->_elevation;// + a->y;
+					x = xmove + (int16)(seq[0] | (seq[1] << 8));
+					y = ymove + (int16)(seq[2] | (seq[3] << 8)) - a->_elevation;
 
 					if (i == extra - 1)
 					{
@@ -1367,32 +1455,32 @@ _0xC020:
 					}
 
 					ushort shadowMask = 0;
-					//if (!useCondMask || a->_cost.AKOS->AKCTOffset == 0) {
-					decflag = 1;
-					/*} else {
-					fseek(HE1_File, a->_cost.AKOS->AKCTOffset + a->_cost.heCondMaskTable[limb] + heCondMaskIndex[i] * 4, SEEK_SET);
-					uint32 cond;// = READ_LE_UINT32(akct + cost.heCondMaskTable[limb] + heCondMaskIndex[i] * 4);
-					readU32LE(HE1_File, &cond);
-					if (cond == 0) {
-					decflag = 1;
+					if (!useCondMask || a->_cost.AKOS->AKCTOffset == 0) {
+						decflag = 1;
 					} else {
-					uint32 type = cond & ~0x3FFFFFFF;
-					cond &= 0x3FFFFFFF;
-					//if (_vm->_game.heversion >= 90) {
-					shadowMask = cond & 0xE000;
-					cond &= ~0xE000;
-					//}
-					if (/*_vm->_game.heversion >= 90 &&/ cond == 0) {
-					decflag = 1;
-					} else if (type == 0x40000000) { // restored_bit
-					decflag = (a->_heCondMask & cond) == cond ? 1 : 0;
-					} else if (type == 0x80000000) { // dirty_bit
-					decflag = (a->_heCondMask & cond) ? 0 : 1;
-					} else {
-					decflag = (a->_heCondMask & cond) ? 1 : 0;
+						fseek(HE1_File, a->_cost.AKOS->AKCTOffset + a->_cost.heCondMaskTable[limb] + heCondMaskIndex[i] * 4, SEEK_SET);
+						uint32 cond;// = READ_LE_UINT32(akct + cost.heCondMaskTable[limb] + heCondMaskIndex[i] * 4);
+						readU32LE(HE1_File, &cond);
+						if (cond == 0) {
+							decflag = 1;
+						} else {
+							uint32 type = cond & ~0x3FFFFFFF;
+							cond &= 0x3FFFFFFF;
+							//if (_vm->_game.heversion >= 90) {
+							shadowMask = cond & 0xE000;
+							cond &= ~0xE000;
+							//}
+							if (/*_vm->_game.heversion >= 90 &&*/ cond == 0) {
+								decflag = 1;
+							} else if (type == 0x40000000) { // restored_bit
+								decflag = (a->_heCondMask & cond) == cond ? 1 : 0;
+							} else if (type == 0x80000000) { // dirty_bit
+								decflag = (a->_heCondMask & cond) ? 0 : 1;
+							} else {
+								decflag = ((a->_heCondMask & cond) ? 1 : 0);
+							}
+						}
 					}
-					}
-					}*/
 
 					if (decflag != 0 && render && a->_cost.AKOS->HasRGBS)
 					{
@@ -1452,7 +1540,7 @@ _0xC020:
 						if(maxy < (y + height)) maxy = y + height;
 					}
 
-					seq += ((*(seq+4) & 0x80) != 0) ? 6 : 5;
+					seq += (((*(seq+4)) & 0x80) != 0) ? 6 : 5;
 				}
 				goto ret;
 			}
@@ -1460,14 +1548,13 @@ _0xC020:
 		case AKC_C021:
 		case AKC_C022:
 			{
-				int s = a->_cost.start[limb] + 4;//AKOS.AnimatedKCH.Animations[Animation].Limbs[Limb].Start + 4;
-				int extra = *(seq + 1);//Data[Offset + 1];
+				seq++;
+				int extra = *seq++;
 				for (int i = 0; i < extra; i++)
 				{
-					heCondMaskIndex[i] = ((uint8_t*)seqstart)[s + i];// *((uint8_t*)(seqstart + s + i));//Data[s + i];
+					heCondMaskIndex[i] = *seq++;
 				}
 				useCondMask = true;
-				seq += extra + 2;
 				code = (ushort)((code == AKC_C021) ? AKC_ComplexChan : AKC_ComplexChan2);
 				goto _0xC020;
 			}
@@ -1522,6 +1609,16 @@ _0xC020:
 				short b_ = (int16)(seq[0] | seq[1] << 8);
 				seq += 2;
 				if (a->_animVariable[a_] < b_) seq = (uint8_t*)seqstart + o;
+				break;
+			}
+			case AKC_JumpLE:
+			{
+				ushort o = (seq[0] | seq[1] << 8);
+				seq += 2;
+				byte a_ = *seq++;
+				short b_ = (int16)(seq[0] | seq[1] << 8);
+				seq += 2;
+				if (a->_animVariable[a_] <= b_) seq = (uint8_t*)seqstart + o;
 				break;
 			}
 		case AKC_JumpG:

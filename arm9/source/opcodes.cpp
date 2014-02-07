@@ -126,7 +126,7 @@ void decodeScriptString(byte *dst, bool scriptString) {
 				src = _arrays[args[val++] & ~0x33539000]->data;//getStringAddress(args[val++]);
 				if (src) {
 					while (*src != 0)
-					*dst++ = *src++;
+						*dst++ = *src++;
 				}
 				break;
 			case 'x':
@@ -757,8 +757,8 @@ int findObject(int x, int y, int num, int *args)
 		if (!result) {
 			// Check object bounds
 			if (RoomResource->RMDA->OBCD[i]->X <= x && RoomResource->RMDA->OBCD[i]->Width + RoomResource->RMDA->OBCD[i]->X > x &&
-			    RoomResource->RMDA->OBCD[i]->Y <= y && RoomResource->RMDA->OBCD[i]->Height + RoomResource->RMDA->OBCD[i]->Y > y)
-					result = RoomResource->RMDA->OBCD[i]->ObjectId;
+				RoomResource->RMDA->OBCD[i]->Y <= y && RoomResource->RMDA->OBCD[i]->Height + RoomResource->RMDA->OBCD[i]->Y > y)
+				result = RoomResource->RMDA->OBCD[i]->ObjectId;
 		}
 
 		if (result) {
@@ -788,18 +788,18 @@ int convertFilePath(byte *dst, int dstSize)
 			dst[i] = '/';
 
 	/*if (_game.platform == Common::kPlatformMacintosh) {
-		// Remove : prefix in HE71 games
-		if (dst[0] == ':') {
-			len -= 1;
-			memmove(dst, dst + 1, len);
-			dst[len] = 0;
-		}
+	// Remove : prefix in HE71 games
+	if (dst[0] == ':') {
+	len -= 1;
+	memmove(dst, dst + 1, len);
+	dst[len] = 0;
+	}
 
-		// Switch all : to / for portablity
-		for (int i = 0; i < len; i++) {
-			if (dst[i] == ':')
-				dst[i] = '/';
-		}
+	// Switch all : to / for portablity
+	for (int i = 0; i < len; i++) {
+	if (dst[i] == ':')
+	dst[i] = '/';
+	}
 	}*/
 
 	// Strip path
@@ -831,190 +831,190 @@ int convertFilePath(byte *dst, int dstSize)
 	printf("convertFilePath: converted filePath is %s\n", dst + r);
 	return r;
 }
- 
 
-void _0x00_PushByte() {
+
+ITCM_CODE static void _0x00_PushByte() {
 	push(fetchScriptByte());
 }
 
-void _0x01_PushWord() {
+ITCM_CODE static void _0x01_PushWord() {
 	push(fetchScriptWordSigned());
 }
 
-void _0x03_PushWordVar()
+ITCM_CODE static void _0x03_PushWordVar()
 {
 	push(readVar(fetchScriptWord()));
 }
 
-void _0x06_ByteArrayRead()
+ITCM_CODE static void _0x06_ByteArrayRead()
 {
 	int base = pop();
 	push(readArray(fetchScriptByte(), 0, base));
 } 
 
-void _0x07_WordArrayRead()
+ITCM_CODE static void _0x07_WordArrayRead()
 {
 	int base = pop();
 	push(readArray(fetchScriptWord(), 0, base)); 
 }
 
-void _0x0B_WordArrayIndexedRead()
+ITCM_CODE static void _0x0B_WordArrayIndexedRead()
 {
 	int base = pop();
 	int idx = pop();
 	push(readArray(fetchScriptWord(), idx, base)); 
 }
 
-void _0x0C_Dup()
+static void _0x0C_Dup()
 {
 	int a = pop();
 	push(a);
 	push(a);
 }
 
-void _0x0D_Not() {
+static void _0x0D_Not() {
 	push(pop() == 0);
 }
 
-void _0x0E_Eq() {
+static void _0x0E_Eq() {
 	push(pop() == pop());
 } 
 
-void _0x0F_Neq() {
+static void _0x0F_Neq() {
 	push(pop() != pop());
 }
 
-void _0x10_Gt() {
+static void _0x10_Gt() {
 	int a = pop();
 	push(pop() > a);
 }
 
-void _0x11_Lt() {
+static void _0x11_Lt() {
 	int a = pop();
 	push(pop() < a);
 }
 
-void _0x12_Le()
+static void _0x12_Le()
 {
 	int a = pop();
 	push(pop() <= a);
 }
 
-void _0x13_Ge() {
+static void _0x13_Ge() {
 	int a = pop();
 	push(pop() >= a);
 }
 
-void _0x14_Add()
+static void _0x14_Add()
 {
 	int a = pop();
 	push(pop() + a);
 }
 
-void _0x15_Sub()
+static void _0x15_Sub()
 {
 	int a = pop();
 	push(pop() - a);
 }
 
-void _0x16_Mul()
+static void _0x16_Mul()
 {
 	int a = pop();
 	push(pop() * a);
 }
 
-void _0x17_Div()
+static void _0x17_Div()
 {
 	int a = pop();
 	push(pop() / a);
 }
 
-void _0x18_Land() {
+static void _0x18_Land() {
 	int a = pop();
 	push(pop() && a);
 }
 
-void _0x19_Lor() {
+static void _0x19_Lor() {
 	int a = pop();
 	push(pop() || a);
 }
 
-void _0x1A_Pop() {
+static void _0x1A_Pop() {
 	pop();
 }
 
-void _0x43_WriteWordVar()
+static void _0x43_WriteWordVar()
 {
 	writeVar(fetchScriptWord(), pop());
 }
 
-/*void _0x46_ByteArrayWrite() 
+/*static void _0x46_ByteArrayWrite() 
 {
 int a = pop();
 writeArray(fetchScriptByte(), 0, pop(), a); 
 }*/
 
-void _0x47_WordArrayWrite()
+static void _0x47_WordArrayWrite()
 {
 	int a = pop();
 	writeArray(fetchScriptWord(), 0, pop(), a); 
 }
 
-void _0x4B_WordArrayIndexedWrite()
+static void _0x4B_WordArrayIndexedWrite()
 {
 	int val = pop();
 	int base = pop();
 	writeArray(fetchScriptWord(), pop(), base, val); 
 }
 
-void _0x4F_WordVarInc()
+static void _0x4F_WordVarInc()
 {
 	int var = fetchScriptWord();
 	writeVar(var, readVar(var) + 1);
 }
 
-void _0x53_WordArrayInc()
+static void _0x53_WordArrayInc()
 {
 	int var = fetchScriptWord();
 	int base = pop();
 	writeArray(var, 0, base, readArray(var, 0, base) + 1); 
 }
 
-void _0x57_WordVarDec()
+static void _0x57_WordVarDec()
 {
 	int var = fetchScriptWord();
 	writeVar(var, readVar(var) - 1); 
 }
 
-void _0x5C_If()
+static void _0x5C_If()
 {
-	if (pop()) _0x73_Jump();
+	if (pop()) _scriptPointer += fetchScriptWordSigned();
 	else fetchScriptWord();
 }
 
-void _0x5D_IfNot()
+static void _0x5D_IfNot()
 {
-	if (!pop()) _0x73_Jump();
+	if (!pop()) _scriptPointer += fetchScriptWordSigned();
 	else fetchScriptWord();
 }
 
-void _0x65_StopObjectCode()
+static void _0x65_StopObjectCode()
 {
 	stopObjectCode();
 }
 
-void _0x66_StopObjectCode()
+static void _0x66_StopObjectCode()
 {
 	stopObjectCode();
 }
 
-void _0x6C_BreakHere()
+static void _0x6C_BreakHere()
 {
 	updateScriptPtr();
 	_currentScript = 0xFF;
 }
 
-void _0x6D_IfClassOfIs()
+static void _0x6D_IfClassOfIs()
 {
 	int args[16];
 	int num, obj, cls;
@@ -1038,7 +1038,7 @@ void _0x6D_IfClassOfIs()
 	push(cond);
 }
 
-void _0x6E_SetClass()
+static void _0x6E_SetClass()
 {
 	int args[16];
 	int num, obj, cls;
@@ -1057,30 +1057,30 @@ void _0x6E_SetClass()
 	}
 }
 
-void _0x6F_GetState()
+static void _0x6F_GetState()
 {
 	int obj = pop();
 	push(getState(obj)); 
 }
 
-void _0x72_GetOwner()
+static void _0x72_GetOwner()
 {
 	push(getOwner(pop()));
 }
 
-void _0x73_Jump()
+static void _0x73_Jump()
 {
 	_scriptPointer += fetchScriptWordSigned();
 }
 
-void _0x75_StopSound()
+static void _0x75_StopSound()
 {
 	int sound = pop();
 	printf("Stop Sound: %d\n", sound);
 	stopSound(sound);
 }
 
-void _0x7B_LoadRoom()
+static void _0x7B_LoadRoom()
 {
 	int room = pop();
 	startScene(room, 0, 0);
@@ -1088,7 +1088,7 @@ void _0x7B_LoadRoom()
 	//_fullRedraw = true;
 }
 
-void _0x7C_StopScript()
+static void _0x7C_StopScript()
 {
 	int script = pop();
 	if (script == 0)
@@ -1097,7 +1097,7 @@ void _0x7C_StopScript()
 		stopScript(script);
 }
 
-void _0x7F_PutActorAtXY()
+static void _0x7F_PutActorAtXY()
 {
 	int room, x, y, act;
 	Actor *a;
@@ -1120,7 +1120,7 @@ void _0x7F_PutActorAtXY()
 	putActor(a, x, y, room);
 }
 
-void _0x82_AnimateActor()
+static void _0x82_AnimateActor()
 {
 	int anim = pop();
 	int act = pop();
@@ -1129,14 +1129,14 @@ void _0x82_AnimateActor()
 	animateActor(a, anim); 
 }
 
-void _0x87_GetRandomNumber()
+static void _0x87_GetRandomNumber()
 {
 	int rnd = rand() % /*abs(*/(pop() + 1)/*)*/;
 	VAR(VAR_RANDOM_NR) = rnd;
 	push(rnd); 
 }
 
-void _0x88_GetRandomNumberRange()
+static void _0x88_GetRandomNumberRange()
 {
 	int max = pop();
 	int min = pop();
@@ -1145,42 +1145,42 @@ void _0x88_GetRandomNumberRange()
 	push(rnd); 
 }
 
-void _0x8B_IsScriptRunning()
+static void _0x8B_IsScriptRunning()
 {
 	push(isScriptRunning(pop()));
 }
 
-void _0x8E_GetObjectY()
+static void _0x8E_GetObjectY()
 {
 	int obj = pop();
 	push(/*getObjY(pop())*/0);
 } 
 
-void _0x91_GetActorCostume()
+static void _0x91_GetActorCostume()
 {
 	Actor *a = &_actors[pop()];//derefActor(pop(), "o6_getActorCostume");
 	push(a->_costume); 
 }
 
-void _0x92_FindInventory()
+static void _0x92_FindInventory()
 {
 	int idx = pop();
 	int owner = pop();
 	push(/*findInventory(owner, idx)*/0);
 } 
 
-void _0x95_BeginOverride()
+static void _0x95_BeginOverride()
 {
 	beginOverride();
 	//_skipVideo = 0;
 }
 
-void _0x96_EndOverride()
+static void _0x96_EndOverride()
 {
 	endOverride();
 }
 
-void _0x98_IsSoundRunning()
+static void _0x98_IsSoundRunning()
 {
 	int snd = pop();
 
@@ -1189,7 +1189,7 @@ void _0x98_IsSoundRunning()
 	push(snd); 
 }
 
-void _0x9F_GetActorFromXY()
+static void _0x9F_GetActorFromXY()
 {
 	int y = pop();
 	int x = pop();
@@ -1197,7 +1197,7 @@ void _0x9F_GetActorFromXY()
 	push(r);
 } 
 
-void _0xA1_PseudoRoom()
+static void _0xA1_PseudoRoom()
 {
 	int list[100];
 	int num, a, value;
@@ -1212,14 +1212,14 @@ void _0xA1_PseudoRoom()
 	}
 } 
 
-void _0xA3_GetVerbEntrypoint()
+static void _0xA3_GetVerbEntrypoint()
 {
 	int e = pop();
 	int v = pop();
 	push(getVerbEntrypoint(v, e));
 }
 
-void _0xA6_DrawBox()
+static void _0xA6_DrawBox()
 {
 	int x, y, x2, y2, color;
 	color = pop();
@@ -1230,12 +1230,12 @@ void _0xA6_DrawBox()
 	//drawBox(x, y, x2, y2, color);
 }
 
-void _0xA7_Pop()
+static void _0xA7_Pop()
 {
 	pop();
 }
 
-void _0xA9_Wait()
+static void _0xA9_Wait()
 {
 	int actnum;
 	int offs = -2;
@@ -1310,7 +1310,7 @@ void _0xA9_Wait()
 	_0x6C_BreakHere();
 }
 
-void _0xAD_IsAnyOf()
+static void _0xAD_IsAnyOf()
 {
 	int list[100];
 	int num;
@@ -1329,7 +1329,7 @@ void _0xAD_IsAnyOf()
 	push(0); 
 }
 
-void _0xB0_Delay()
+static void _0xB0_Delay()
 {
 	uint32 delay = (uint16)pop();
 	vm.slot[_currentScript].delay = delay;
@@ -1337,7 +1337,7 @@ void _0xB0_Delay()
 	_0x6C_BreakHere();
 }
 
-void _0xB1_DelaySeconds()
+static void _0xB1_DelaySeconds()
 {
 	uint32 delay = (uint32)pop();
 	delay = delay * 60;
@@ -1346,47 +1346,47 @@ void _0xB1_DelaySeconds()
 	_0x6C_BreakHere(); 
 }
 
-void _0xB3_StopSentence()
+static void _0xB3_StopSentence()
 {
 	//_sentenceNum = 0;
 	stopScript(VAR(VAR_SENTENCE_SCRIPT));
 	//clearClickedStatus();
 }
 
-void _0xB4_PrintLine() 
+static void _0xB4_PrintLine() 
 {
 	_actorToPrintStrFor = 0xFF;
 	decodeParseString(0, 0);
 }
 
 
-void _0xB5_PrintText() 
+static void _0xB5_PrintText() 
 {
 	decodeParseString(1, 0);
 }
 
-void _0xB6_PrintDebug() 
+static void _0xB6_PrintDebug() 
 {
 	decodeParseString(2, 0);
 }
 
-void _0xB7_PrintSystem() 
+static void _0xB7_PrintSystem() 
 {
 	decodeParseString(3, 0);
 }
 
-void _0xB8_PrintActor() 
+static void _0xB8_PrintActor() 
 {
 	decodeParseString(0, 1);
 }
 
-void _0xB9_PrintEgo() 
+static void _0xB9_PrintEgo() 
 {
 	push(VAR(VAR_EGO));
 	decodeParseString(0, 1);
 }
 
-void _0xBF_StartScriptQuick2()
+static void _0xBF_StartScriptQuick2()
 {
 	int args[25];
 	int script;
@@ -1395,13 +1395,13 @@ void _0xBF_StartScriptQuick2()
 	runScript(script, 0, 1, args); 
 }
 
-void _0xC4_Abs()
+static void _0xC4_Abs()
 {
 	int a = pop();
 	push((a >= 0) ? a : -a);
 }
 
-void _0xCA_DelayFrames()
+static void _0xCA_DelayFrames()
 {
 	ScriptSlot *ss = &vm.slot[_currentScript];
 	if (ss->delayFrameCount == 0) {
@@ -1415,7 +1415,7 @@ void _0xCA_DelayFrames()
 	}
 }
 
-void _0xCB_PickOneOf()
+static void _0xCB_PickOneOf()
 {
 	int args[100];
 	int i, num;
@@ -1427,7 +1427,7 @@ void _0xCB_PickOneOf()
 	push(args[i]); 
 }
 
-void _0xCD_StampObject()
+static void _0xCD_StampObject()
 {
 	int object, x, y, state;
 
@@ -1452,7 +1452,7 @@ void _0xCD_StampObject()
 	drawObject(objnum, 0);
 }
 
-void _0xD0_GetDateTime()
+static void _0xD0_GetDateTime()
 {
 	time_t ut = time(NULL);
 	tm* t = localtime(&ut);
@@ -1463,38 +1463,38 @@ void _0xD0_GetDateTime()
 	VAR(VAR_TIMEDATE_MINUTE) = t->tm_min; 
 }
 
-void _0xD1_StopTalking()
+static void _0xD1_StopTalking()
 {
 	stopTalk();
 }
 
-void _0xD2_GetAnimateVariable()
+static void _0xD2_GetAnimateVariable()
 {
 	int var = pop();
 	Actor *a = &_actors[pop()];
 	push(getAnimVar(a, var));
 }
 
-void _0xD4_Shuffle()
+static void _0xD4_Shuffle()
 {
 	int b = pop();
 	int a = pop();
 	shuffleArray(fetchScriptWord(), a, b);
 }
 
-void _0xD6_BAnd()
+static void _0xD6_BAnd()
 {
 	int a = pop();
 	push(pop() & a); 
 }
 
-void _0xD7_BOr()
+static void _0xD7_BOr()
 {
 	int a = pop();
 	push(pop() | a); 
 }
 
-void _0xE4_SetBoxSet()
+static void _0xE4_SetBoxSet()
 {
 	int arg = pop() - 1;
 
@@ -1531,4 +1531,91 @@ void _0xE4_SetBoxSet()
 
 	if (_game.version == 7)
 	putActors();*/
+}
+
+void setupScumm6()
+{
+	for(int i = 0; i < 256; i++)
+	{
+		_opcodes[i] = unknownOpcode;
+	}
+	_opcodes[0x00] = _0x00_PushByte;
+	_opcodes[0x01] = _0x01_PushWord;
+	_opcodes[0x03] = _0x03_PushWordVar;
+	_opcodes[0x06] = _0x06_ByteArrayRead;
+	_opcodes[0x07] = _0x07_WordArrayRead;
+	_opcodes[0x0B] = _0x0B_WordArrayIndexedRead;
+	_opcodes[0x0C] = _0x0C_Dup;
+	_opcodes[0x0D] = _0x0D_Not;
+	_opcodes[0x0E] = _0x0E_Eq;
+	_opcodes[0x0F] = _0x0F_Neq;
+	_opcodes[0x10] = _0x10_Gt;
+	_opcodes[0x11] = _0x11_Lt;
+	_opcodes[0x12] = _0x12_Le;
+	_opcodes[0x13] = _0x13_Ge;
+	_opcodes[0x14] = _0x14_Add;
+	_opcodes[0x15] = _0x15_Sub;
+	_opcodes[0x16] = _0x16_Mul;
+	_opcodes[0x17] = _0x17_Div;
+	_opcodes[0x18] = _0x18_Land;
+	_opcodes[0x19] = _0x19_Lor;
+	_opcodes[0x1A] = _0x1A_Pop;
+	_opcodes[0x43] = _0x43_WriteWordVar;
+	_opcodes[0x47] = _0x47_WordArrayWrite;
+	_opcodes[0x4B] = _0x4B_WordArrayIndexedWrite;
+	_opcodes[0x4F] = _0x4F_WordVarInc;
+	_opcodes[0x53] = _0x53_WordArrayInc;
+	_opcodes[0x57] = _0x57_WordVarDec;
+	_opcodes[0x5C] = _0x5C_If;
+	_opcodes[0x5D] = _0x5D_IfNot;
+	_opcodes[0x65] = _0x65_StopObjectCode;
+	_opcodes[0x66] = _0x66_StopObjectCode;
+	_opcodes[0x6C] = _0x6C_BreakHere;
+	_opcodes[0x6D] = _0x6D_IfClassOfIs;
+	_opcodes[0x6E] = _0x6E_SetClass;
+	_opcodes[0x6F] = _0x6F_GetState;
+	_opcodes[0x72] = _0x72_GetOwner;
+	_opcodes[0x73] = _0x73_Jump;
+	_opcodes[0x75] = _0x75_StopSound;
+	_opcodes[0x7B] = _0x7B_LoadRoom;
+	_opcodes[0x7C] = _0x7C_StopScript;
+	_opcodes[0x7F] = _0x7F_PutActorAtXY;
+	_opcodes[0x82] = _0x82_AnimateActor;
+	_opcodes[0x87] = _0x87_GetRandomNumber;
+	_opcodes[0x88] = _0x88_GetRandomNumberRange;
+	_opcodes[0x8B] = _0x8B_IsScriptRunning;
+	_opcodes[0x8E] = _0x8E_GetObjectY;
+	_opcodes[0x91] = _0x91_GetActorCostume;
+	_opcodes[0x92] = _0x92_FindInventory;
+	_opcodes[0x95] = _0x95_BeginOverride;
+	_opcodes[0x96] = _0x96_EndOverride;
+	_opcodes[0x98] = _0x98_IsSoundRunning;
+	_opcodes[0x9F] = _0x9F_GetActorFromXY;
+	_opcodes[0xA1] = _0xA1_PseudoRoom;
+	_opcodes[0xA3] = _0xA3_GetVerbEntrypoint;
+	_opcodes[0xA6] = _0xA6_DrawBox;
+	_opcodes[0xA7] = _0xA7_Pop;
+	_opcodes[0xA9] = _0xA9_Wait;
+	_opcodes[0xAD] = _0xAD_IsAnyOf;
+	_opcodes[0xB0] = _0xB0_Delay;
+	_opcodes[0xB1] = _0xB1_DelaySeconds;
+	_opcodes[0xB3] = _0xB3_StopSentence;
+	_opcodes[0xB4] = _0xB4_PrintLine;
+	_opcodes[0xB5] = _0xB5_PrintText;
+	_opcodes[0xB6] = _0xB6_PrintDebug;
+	_opcodes[0xB7] = _0xB7_PrintSystem;
+	_opcodes[0xB8] = _0xB8_PrintActor;
+	_opcodes[0xB9] = _0xB9_PrintEgo;
+	_opcodes[0xBF] = _0xBF_StartScriptQuick2;
+	_opcodes[0xC4] = _0xC4_Abs;
+	_opcodes[0xCA] = _0xCA_DelayFrames;
+	_opcodes[0xCB] = _0xCB_PickOneOf;
+	_opcodes[0xCD] = _0xCD_StampObject;
+	_opcodes[0xD0] = _0xD0_GetDateTime;
+	_opcodes[0xD1] = _0xD1_StopTalking;
+	_opcodes[0xD2] = _0xD2_GetAnimateVariable;
+	_opcodes[0xD4] = _0xD4_Shuffle;
+	_opcodes[0xD6] = _0xD6_BAnd;
+	_opcodes[0xD7] = _0xD7_BOr;
+	_opcodes[0xE4] = _0xE4_SetBoxSet;
 }

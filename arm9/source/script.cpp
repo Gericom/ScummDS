@@ -43,6 +43,8 @@ uint32_t _numArray = 8192;
 
 ArrayHeader* _arrays[8192];
 
+DTCM_DATA VoidFn _opcodes[256];
+
 static int done = 0;
 
 //void* mallocs[1024];
@@ -507,10 +509,10 @@ void refreshScriptPointer() {
 	}*/
 }
 
-static inline void executeOpcode(byte i);
+//static inline void executeOpcode(byte i);
 
 /** Execute a script - Read opcode, and execute it from the table */
-void executeScript() {
+ITCM_CODE void executeScript() {
 	soundIO_FillStreamBuffers();//Update the sound stream here just to make sure the sound will continue to play correctly. When the frames (all frames!) render < 4 seconds for sure, this can be removed.
 	//int c;
 	while (_currentScript != 0xFF) {
@@ -519,7 +521,9 @@ void executeScript() {
 		vm.slot[_currentScript].didexec = true;
 		//printf("Script %d, offset 0x%x: [%X]\n", vm.slot[_currentScript].number, (uint)(_scriptPointer - _scriptOrgPointer) - 1, _opcode);
 
-		executeOpcode(_opcode);
+		_opcodes[_opcode]();
+
+		//executeOpcode(_opcode);
 
 		/*This enables stepping through the code with the A button
 		while(1)
@@ -535,7 +539,7 @@ void executeScript() {
 	}
 }
 
-static inline void executeOpcode(byte i)
+/*static inline void executeOpcode(byte i)
 {
 	switch(i)
 	{
@@ -697,14 +701,21 @@ static inline void executeOpcode(byte i)
 		while(1);
 		break;
 	}
+}*/
+
+void unknownOpcode()
+{
+	printf("Script %d, offset 0x%x: [%X]\n", vm.slot[_currentScript].number, (uint)(_scriptPointer - _scriptOrgPointer) - 1, _opcode);
+	printf("Unknown Opcode\n");
+	while(1);
 }
 
-byte fetchScriptByte() {
+ITCM_CODE byte fetchScriptByte() {
 	//refreshScriptPointer();
 	return *_scriptPointer++;
 }
 
-uint16_t fetchScriptWord() {
+ITCM_CODE uint16_t fetchScriptWord() {
 	//refreshScriptPointer();
 	uint16_t a = (_scriptPointer[0] | _scriptPointer[1] << 8);
 	_scriptPointer += 2;
@@ -714,11 +725,11 @@ uint16_t fetchScriptWord() {
 	//return a;
 }
 
-int16 fetchScriptWordSigned() {
+ITCM_CODE int16 fetchScriptWordSigned() {
 	return (int16)fetchScriptWord();
 }
 
-uint32_t fetchScriptDWord() {
+ITCM_CODE uint32_t fetchScriptDWord() {
 	uint32_t a = (_scriptPointer[0] | _scriptPointer[1] << 8 | _scriptPointer[2] << 16 | _scriptPointer[3] << 24);
 	_scriptPointer += 4;
 	return a;
@@ -729,11 +740,11 @@ uint32_t fetchScriptDWord() {
 	//return a;
 }
 
-int fetchScriptDWordSigned() {
+ITCM_CODE int fetchScriptDWordSigned() {
 	return (int32)fetchScriptDWord();
 } 
 
-int readVar(uint var) {
+ITCM_CODE int readVar(uint var) {
 	//int a;
 
 	//printf("readvar(%x)\n", var);
@@ -790,7 +801,7 @@ int readVar(uint var) {
 	return -1;
 }
 
-void writeVar(uint var, int value) {
+ITCM_CODE void writeVar(uint var, int value) {
 	//printf("writeVar(%x, %d)\n", var, value);
 	//while(scanKeys(), keysHeld() == 0);
 	//swiDelay(5000000);
@@ -896,11 +907,11 @@ void writeVar(uint var, int value) {
 	printf("Error: Illegal varbits (w)\n");
 }
 
-void push(int a) {
+ITCM_CODE void push(int a) {
 	_vmStack[_scummStackPos++] = a;
 }
 
-int pop() {
+ITCM_CODE int pop() {
 	return _vmStack[--_scummStackPos];
 }
 

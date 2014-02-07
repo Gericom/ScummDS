@@ -23,7 +23,7 @@ static int buffersize = 0;
 //static int _decomp_shr;
 //static int _decomp_mask;
 
-void FILL_BITS_he(uint32* data, int* shift, int n)
+ITCM_CODE void FILL_BITS_he(uint32* data, int* shift, int n)
 {
 	if (*shift < n) 
 	{
@@ -41,7 +41,7 @@ void FILL_BITS_he(uint32* data, int* shift, int n)
 	}
 }
 
-void writeRoomColor(LFLF_t* Room, byte *dst, byte color)
+ITCM_CODE void writeRoomColor(LFLF_t* Room, byte *dst, byte color)
 {
 	uint8_t* colordata = (uint8_t*)(&Room->RMDA->PALS->WRAP->APAL->data[color * 3]);
 	uint8_t r = colordata[0] >> 3;
@@ -53,7 +53,7 @@ void writeRoomColor(LFLF_t* Room, byte *dst, byte color)
 	*((uint16_t*)dst) = c16;
 }
 
-void ConvertRoomBackground(FILE* handle, LFLF_t* Room)
+ITCM_CODE void ConvertRoomBackground(FILE* handle, LFLF_t* Room)
 {
 	uint16_t* dst = &TempBuffer[0];
 
@@ -95,7 +95,7 @@ void ConvertRoomBackground(FILE* handle, LFLF_t* Room)
 	}
 }
 
-void ConvertStripeMap(FILE* handle, uint32_t DataOffset, uint8 *dst, int Width, int Height, int TransparentColorIndex)
+ITCM_CODE void ConvertStripeMap(FILE* handle, uint32_t DataOffset, uint8 *dst, int Width, int Height, int TransparentColorIndex)
 {
 	fseek(handle, DataOffset, SEEK_SET);
 	uint32_t NrStrips;
@@ -198,7 +198,7 @@ void ConvertStripeMap(FILE* handle, uint32_t DataOffset, uint8 *dst, int Width, 
 #undef READ_BIT
 
 #define READ_BIT (cl--, bit = bits & 1, bits >>= 1, bit)
-void FILL_BITS(byte* cl, uint* bits)
+ITCM_CODE void FILL_BITS(byte* cl, uint* bits)
 {
 	if (*cl <= 8)
 	{     
@@ -213,7 +213,7 @@ void FILL_BITS(byte* cl, uint* bits)
 	}
 }
 
-void drawStripComplex(LFLF_t* Room, byte *dst, int height, int dstPitch, int transpColor, int _decomp_shr, int _decomp_mask)
+ITCM_CODE void drawStripComplex(LFLF_t* Room, byte *dst, int height, int dstPitch, int transpColor, int _decomp_shr, int _decomp_mask)
 {
 	byte color = readByteBuffer();
 	uint bits = readByteBuffer();
@@ -267,7 +267,7 @@ void drawStripComplex(LFLF_t* Room, byte *dst, int height, int dstPitch, int tra
 	} while (--height);
 }
 
-void drawStripBasicH(LFLF_t* Room, byte *dst, int height, int dstPitch, int transpColor, int _decomp_shr, int _decomp_mask)
+ITCM_CODE void drawStripBasicH(LFLF_t* Room, byte *dst, int height, int dstPitch, int transpColor, int _decomp_shr, int _decomp_mask)
 {
 	byte color = readByteBuffer();
 	uint bits = readByteBuffer();
@@ -301,7 +301,7 @@ void drawStripBasicH(LFLF_t* Room, byte *dst, int height, int dstPitch, int tran
 	} while (--height);
 }
 
-void drawStripBasicV(LFLF_t* Room, byte *dst, int height, int dstPitch, int transpColor, int _decomp_shr, int _decomp_mask)
+ITCM_CODE void drawStripBasicV(LFLF_t* Room, byte *dst, int height, int dstPitch, int transpColor, int _decomp_shr, int _decomp_mask)
 {
 	byte color = readByteBuffer();
 	uint bits = readByteBuffer();
@@ -336,7 +336,7 @@ void drawStripBasicV(LFLF_t* Room, byte *dst, int height, int dstPitch, int tran
 	} while (--x);
 }
 
-void drawStripRaw(LFLF_t* Room, byte *dst, int height, int dstPitch, int transpColor)
+ITCM_CODE void drawStripRaw(LFLF_t* Room, byte *dst, int height, int dstPitch, int transpColor)
 {
 	do {
 		for (int x = 0; x < 8; x ++) {
@@ -350,7 +350,7 @@ void drawStripRaw(LFLF_t* Room, byte *dst, int height, int dstPitch, int transpC
 
 static uint8_t linebuffer[2048];
 
-void decompressWizImage(uint8 *dst, int dstPitch, uint32_t DataOffset, int X, int Y, int Width, int Height, void *palPtr) {
+ITCM_CODE void decompressWizImage(uint8 *dst, int dstPitch, uint32_t DataOffset, int X, int Y, int Width, int Height, void *palPtr) {
 	//const *dataPtrNext;
 	uint8 code, *dstPtr, *dstPtrNext;
 	int h, w, xoff, dstInc;
@@ -459,7 +459,7 @@ void decompressWizImage(uint8 *dst, int dstPitch, uint32_t DataOffset, int X, in
 	}
 }
 
-void ConvertWIZImage(uint32_t DataOffset, void* Palette, int X, int Y, uint32_t Width, uint32_t Height, uint32_t Compression)
+ITCM_CODE void ConvertWIZImage(uint32_t DataOffset, void* Palette, int X, int Y, uint32_t Width, uint32_t Height, uint32_t Compression)
 {
 	switch (Compression)
 	{
@@ -486,7 +486,7 @@ void ConvertWIZImage(uint32_t DataOffset, void* Palette, int X, int Y, uint32_t 
 	}
 }
 
-void ConvertWIZCursor(uint32_t DataOffset, uint8_t* Dst, void* Palette, uint32_t Width, uint32_t Height, uint32_t Compression)
+ITCM_CODE void ConvertWIZCursor(uint32_t DataOffset, uint8_t* Dst, void* Palette, uint32_t Width, uint32_t Height, uint32_t Compression)
 {
 	switch (Compression)
 	{
@@ -498,7 +498,7 @@ void ConvertWIZCursor(uint32_t DataOffset, uint8_t* Dst, void* Palette, uint32_t
 	}
 }
 
-uint8_t readByteBuffer()
+ITCM_CODE uint8_t readByteBuffer()
 {
 	if(buffersize == 0) 
 	{
@@ -510,18 +510,12 @@ uint8_t readByteBuffer()
 	return dst;
 }
 
-void clearByteBuffer()
-{
-	buffersize = 0;
-}
-
-void ConvertAKOSFrame(uint32_t DataOffset, uint8_t* Dst, void* Palette, uint32_t PaletteLength, void* Colors, uint32_t Width, uint32_t Height, uint32_t Codec)
+ITCM_CODE void ConvertAKOSFrame(uint32_t DataOffset, uint8_t* Dst, void* Palette, uint32_t PaletteLength, void* Colors, uint32_t Width, uint32_t Height, uint32_t Codec)
 {
 	buffersize = 0;
 	switch (Codec)
 	{
 	case 1:  DecompressAKOSCodec1_asm(Dst, Palette, Colors, Width, Height, DataOffset, PaletteLength); break;
-		//case 1: DecompressAKOSCodec1(DataOffset, Dst, Palette, PaletteLength, Colors, Width, Height); break;
 		//case 16: return DecompressAKOSCodec16(Data, Offset, Palette, Colors, Width, Height);
 	case 32: decompressWizImage(Dst, Width * 2, DataOffset, 0, 0, Width, Height, Colors); break;
 	}

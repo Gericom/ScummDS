@@ -25,7 +25,7 @@
 
 #include <HEP.h>
 
-void waitForTimer(int msec_delay) {
+ITCM_CODE void waitForTimer(int msec_delay) {
 	uint32 start_time;
 
 	//if (_fastMode & 2)
@@ -48,7 +48,7 @@ void waitForTimer(int msec_delay) {
 
 static int lastpressed = 0;
 
-void processInput()
+ITCM_CODE void processInput()
 {
 	touchPosition touch;
 	scanKeys();
@@ -91,7 +91,7 @@ static int render = 0;
 
 static int textureID;
 
-int main()
+ITCM_CODE int main()
 {
 	defaultExceptionHandler();
 	videoSetMode(MODE_3_2D);
@@ -261,6 +261,8 @@ int main()
 
 	ClearObjectFrameBuffer();
 
+	setupHE90();
+
 	//Execution Starts Here!
 	runScript(1, 0, 0, NULL, 0);
 	int diff = 0;
@@ -347,6 +349,8 @@ int main()
 				glFlush(GL_TRANS_MANUALSORT);
 			}
 
+			//render++;
+			//if(render >= (((numactors * 3) > 5) ? 5: (numactors * 3))) render = 0;
 			render++;
 			if(render >= (((numactors * 3) > 5) ? 5: (numactors * 3))) render = 0;
 		}
